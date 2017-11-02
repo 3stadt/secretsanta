@@ -1,0 +1,4 @@
+SmtpUser=""
+SmtpPass=""
+FromAddress=""
+EmailSubject="Use %s as placeholder for the name of the current secret santa"

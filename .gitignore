@@ -1,0 +1,6 @@
+/.idea
+/config.toml
+/participants.csv
+/assets/*
+/node_modules
+/template.html
