@@ -1,6 +1,6 @@
 /.idea
 /config.toml
-/participants.csv
+/participants*
 /assets/*
 /node_modules
 /template.html

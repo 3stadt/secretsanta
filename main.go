@@ -2,21 +2,18 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
 	"github.com/yunabe/easycsv"
-	"html/template"
 	"io/ioutil"
 	"math/rand"
-	"net/smtp"
 	"os"
 	"strings"
 	"time"
+	"github.com/3stadt/secretsanta/mail"
+	"strconv"
 )
-
-var auth smtp.Auth
 
 type Config struct {
 	SmtpUser     string
@@ -30,32 +27,38 @@ type participant struct {
 	Email string `name:"email"`
 }
 
-type Request struct {
-	from    string
-	to      []string
-	subject string
-	body    string
-}
-
-type templatedata struct {
-	Santa     string
-	Presentee string
-}
-
-type smtpAuth struct {
-	username string
-	password string
-}
-
-type maildata struct {
-	auth         smtpAuth
-	subject      string
-	templatedata templatedata
-}
-
 func main() {
 	c, err := readConfig()
 	exitOnErr(err)
+	participants := getParticipants()
+	var seed *int64
+	if len(os.Args) > 1 {
+		seedArg, err := strconv.ParseInt(os.Args[1], 10, 64)
+		if err == nil {
+			seed = &seedArg
+		}
+	}
+	pairings, seed := pair(participants, seed)
+	m := mail.MailData{
+		Auth: mail.SmtpAuth{
+			Username: c.SmtpUser,
+			Password: c.SmtpPass,
+		},
+		Subject: c.EmailSubject,
+	}
+	for santa, presentee := range pairings {
+		m.TemplateData = mail.TemplateData{
+			Santa:     santa.Name,
+			Presentee: presentee.Name,
+		}
+		req := mail.NewRequest([]string{santa.Email}, c.FromAddress, fmt.Sprintf(m.Subject, santa.Name), "")
+		req.Send(&m)
+	}
+	fmt.Printf("Done. Seed used for pairing was %d, save it and use it as argument to re-send the e-mails from this run. (using the same csv file)\n", *seed)
+}
+
+func getParticipants() []participant {
+	var participants []participant
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Path to the CSV file: [participants.csv] ")
 	participantsCsv, err := reader.ReadString('\n')
@@ -69,7 +72,6 @@ func main() {
 		os.Exit(1)
 	}
 	r := easycsv.NewReaderFile(participantsCsv)
-	participants := []participant{}
 	err = r.ReadAll(&participants)
 	exitOnErr(err)
 	fmt.Println()
@@ -83,22 +85,7 @@ func main() {
 	if strings.ToLower(do) != "y" {
 		os.Exit(0)
 	}
-	pairings := pair(participants)
-	m := maildata{
-		auth: smtpAuth{
-			username: c.SmtpUser,
-			password: c.SmtpPass,
-		},
-		subject: c.EmailSubject,
-	}
-	for santa, presentee := range pairings {
-		m.templatedata = templatedata{
-			Santa:     santa.Name,
-			Presentee: presentee.Name,
-		}
-		req := NewRequest([]string{santa.Email}, c.FromAddress, fmt.Sprintf(m.subject, santa.Name), "")
-		send(&m, req)
-	}
+	return participants
 }
 
 func readConfig() (*Config, error) {
@@ -118,9 +105,13 @@ func readConfig() (*Config, error) {
 	return &conf, nil
 }
 
-func pair(p []participant) map[participant]participant {
+func pair(p []participant, seed *int64) (map[participant]participant, *int64) {
 	// shuffle the slice: https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm
-	source := rand.NewSource(time.Now().UnixNano())
+	if seed == nil {
+		now := time.Now().UnixNano()
+		seed = &now
+	}
+	source := rand.NewSource(*seed)
 	random := rand.New(source)
 	for i := len(p) - 1; i > 0; i-- {
 		j := random.Intn(i + 1)
@@ -136,51 +127,7 @@ func pair(p []participant) map[participant]participant {
 		}
 		partMap[part] = p[i+1]
 	}
-	return partMap
-}
-
-func send(m *maildata, r *Request) error {
-	// mail sending borrowed from @dhanush: https://gist.github.com/dhanush/f1bac67b659cdd88d3703ea758a313c0
-	auth = smtp.PlainAuth("", m.auth.username, m.auth.password, "smtp.gmail.com")
-	err := r.ParseTemplate("template.html", m.templatedata)
-	if err != nil {
-		return err
-	}
-	_, err = r.SendEmail()
-	return err
-}
-
-func NewRequest(to []string, from, subject, body string) *Request {
-	return &Request{
-		from:    from,
-		to:      to,
-		subject: subject,
-		body:    body,
-	}
-}
-
-func (r *Request) SendEmail() (bool, error) {
-	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	subject := "Subject: " + r.subject + "!\n"
-	msg := []byte(subject + mime + "\n" + r.body)
-	addr := "smtp.gmail.com:587"
-	if err := smtp.SendMail(addr, auth, r.from, r.to, msg); err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
-func (r *Request) ParseTemplate(templateFileName string, data interface{}) error {
-	t, err := template.ParseFiles(templateFileName)
-	if err != nil {
-		return err
-	}
-	buf := new(bytes.Buffer)
-	if err = t.Execute(buf, data); err != nil {
-		return err
-	}
-	r.body = buf.String()
-	return nil
+	return partMap, seed
 }
 
 func exitOnErr(err error) {
