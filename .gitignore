@@ -1,6 +1,5 @@
 /.idea
 /config.toml
 /participants*
-/assets/*
 /node_modules
 /template.html

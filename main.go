@@ -1,138 +1,73 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"github.com/BurntSushi/toml"
-	"github.com/pkg/errors"
-	"github.com/yunabe/easycsv"
+	"github.com/hoisie/web"
+	"github.com/phayes/freeport"
+	"github.com/skratchdot/open-golang/open"
 	"io/ioutil"
-	"math/rand"
+	"log"
 	"os"
-	"strings"
-	"time"
-	"github.com/3stadt/secretsanta/mail"
 	"strconv"
+	"time"
 )
 
-type Config struct {
-	SmtpUser     string
-	SmtpPass     string
-	FromAddress  string
-	EmailSubject string
-}
-
-type participant struct {
-	Name  string `name:"name"`
-	Email string `name:"email"`
-}
+var (
+	beatCount = 0
+	logger    = log.New(ioutil.Discard, "", log.Ldate|log.Ltime|log.Lshortfile)
+)
 
 func main() {
-	c, err := readConfig()
-	exitOnErr(err)
-	participants := getParticipants()
-	var seed *int64
-	if len(os.Args) > 1 {
-		seedArg, err := strconv.ParseInt(os.Args[1], 10, 64)
-		if err == nil {
-			seed = &seedArg
-		}
+	port := getFreePort()
+	s := web.NewServer()
+
+	s.SetLogger(logger)
+	s.Config = &web.ServerConfig{
+		StaticDir: "/home/n/go/src/github.com/3stadt/secretsanta/assets/docroot", // TODO make dynamic
 	}
-	pairings, seed := pair(participants, seed)
-	m := mail.MailData{
-		Auth: mail.SmtpAuth{
-			Username: c.SmtpUser,
-			Password: c.SmtpPass,
-		},
-		Subject: c.EmailSubject,
-	}
-	for santa, presentee := range pairings {
-		m.TemplateData = mail.TemplateData{
-			Santa:     santa.Name,
-			Presentee: presentee.Name,
-		}
-		req := mail.NewRequest([]string{santa.Email}, c.FromAddress, fmt.Sprintf(m.Subject, santa.Name), "")
-		req.Send(&m)
-	}
-	fmt.Printf("Done. Seed used for pairing was %d, save it and use it as argument to re-send the e-mails from this run. (using the same csv file)\n", *seed)
+	s.Post("/api/heartbeat", heartbeat)
+	s.Post("/api/sendmail", sendMail)
+	showBrowser("http://127.0.0.1:" + port)
+	go checkHeartbeat(s)
+	s.Run("127.0.0.1:" + port)
 }
 
-func getParticipants() []participant {
-	var participants []participant
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Path to the CSV file: [participants.csv] ")
-	participantsCsv, err := reader.ReadString('\n')
-	participantsCsv = strings.TrimSpace(participantsCsv)
-	exitOnErr(err)
-	if participantsCsv == "" {
-		participantsCsv = "participants.csv"
-	}
-	if _, err := os.Stat(participantsCsv); os.IsNotExist(err) {
-		fmt.Printf("file %s does not exist or is not readable\n", participantsCsv)
+func showBrowser(url string) {
+	err := open.Run(url)
+	if err != nil {
+		logger.Printf("unable to open browser: %s\n", err.Error())
 		os.Exit(1)
 	}
-	r := easycsv.NewReaderFile(participantsCsv)
-	err = r.ReadAll(&participants)
-	exitOnErr(err)
-	fmt.Println()
-	for _, part := range participants {
-		fmt.Printf("%s \t %s\n", part.Name, part.Email)
-	}
-	fmt.Print("\nE-Mails will be sent to all persons listed above. Continue? [y/N] ")
-	do, err := reader.ReadString('\n')
-	do = strings.TrimSpace(do)
-	exitOnErr(err)
-	if strings.ToLower(do) != "y" {
-		os.Exit(0)
-	}
-	return participants
 }
 
-func readConfig() (*Config, error) {
-	if _, err := os.Stat("config.toml"); os.IsNotExist(err) {
-		return nil, errors.New("Please create a config.toml file.")
-	}
-	tomlBytes, err := ioutil.ReadFile("config.toml")
-	if err != nil {
-		return nil, err
-	}
-	tomlData := string(tomlBytes)
-	var conf Config
-	_, err = toml.Decode(tomlData, &conf)
-	if err != nil {
-		return nil, err
-	}
-	return &conf, nil
-}
-
-func pair(p []participant, seed *int64) (map[participant]participant, *int64) {
-	// shuffle the slice: https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm
-	if seed == nil {
-		now := time.Now().UnixNano()
-		seed = &now
-	}
-	source := rand.NewSource(*seed)
-	random := rand.New(source)
-	for i := len(p) - 1; i > 0; i-- {
-		j := random.Intn(i + 1)
-		p[i], p[j] = p[j], p[i]
-	}
-	// generate pairing
-	lastIndex := len(p) - 1
-	partMap := make(map[participant]participant)
-	for i, part := range p {
-		if i == lastIndex {
-			partMap[part] = p[0]
+func checkHeartbeat(s *web.Server) {
+	time.Sleep(5 * time.Second) // 10 seconds grace time for first opening the app
+	for {
+		time.Sleep(5 * time.Second)
+		if beatCount > 0 {
+			logger.Printf("found heartbeat. [%d]\n", beatCount)
+			beatCount = 0
 			continue
 		}
-		partMap[part] = p[i+1]
+		s.Close()
+		logger.Print("lost heartbeat from browser, exiting...\n")
+		os.Exit(0)
 	}
-	return partMap, seed
 }
 
-func exitOnErr(err error) {
+func heartbeat() string {
+	beatCount++
+	return ""
+}
+
+func sendMail(ctx *web.Context) string {
+	return fmt.Sprintf("%v", ctx.Request.PostForm)
+}
+
+func getFreePort() string {
+	port, err := freeport.GetFreePort()
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
+		log.Fatal(err)
 	}
+	return strconv.Itoa(port)
 }

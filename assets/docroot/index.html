@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>SecretSanta</title>
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="smartwizard/dist/css/smart_wizard.min.css" rel="stylesheet" type="text/css" />
+    <link href="smartwizard/dist/css/smart_wizard_theme_arrows.min.css" rel="stylesheet" type="text/css" />
+    <style type="text/css">
+        .error {
+            color:red;
+        }
+    </style>
+</head>
+<body>
+<form action="#" id="mailconfigForm" role="form" data-toggle="validator" method="post" accept-charset="utf-8">
+    <div id="smartwizard">
+        <ul>
+            <li><a href="#step-1">E-Mail<br /><small>Smtp Data</small></a></li>
+            <li><a href="#step-2">Step Title<br /><small>Step description</small></a></li>
+            <li><a href="#step-3">Step Title<br /><small>Step description</small></a></li>
+            <li><a href="#step-4">Step Title<br /><small>Step description</small></a></li>
+        </ul>
+        <div>
+            <div id="step-1" class="">
+                <div id="form-step-0" role="form" data-toggle="validator">
+                    <h2>Deine SMTP Daten</h2>
+                    <div class="form-group">
+                        <p>
+                            <label for="smtpusername">Username:</label>
+                            <input type="text" class="form-control" name="smtpusername" id="smtpusername"
+                                   placeholder="SMTP username" required>
+                        </p>
+                        <p>
+                            <label for="smtppassword">Passwort:</label>
+                            <input type="password" class="form-control" name="smtppassword" id="smtppassword" required>
+                        </p>
+                        <p>
+                            <label for="smtpfrom">From Address:</label>
+                            <input type="email" class="form-control" name="smtpfrom" id="smtpfrom" required>
+                        </p>
+                        <p>
+                            <label for="smtpserver">Server name:</label>
+                            <input type="text" class="form-control" name="smtpserver" id="smtpserver"
+                                   value="smtp.gmail.com" required>
+                        </p>
+                        <p>
+                            <label for="smtpport">Server port:</label>
+                            <input type="number" class="form-control" name="smtpport" id="smtpport" value="587"
+                                   required>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div id="step-2" class="">
+                Step Content
+            </div>
+            <div id="step-3" class="">
+                Step Content
+            </div>
+            <div id="step-4" class="">
+                Step Content
+            </div>
+        </div>
+    </div>
+</form>
+    <script src="jquery/jquery-3.2.1.min.js"></script>
+    <script src="jquery/jquery.validate.min.js"></script>
+    <script src="jquery/localization/messages_de.min.js"></script>
+    <script type="text/javascript" src="smartwizard/dist/js/jquery.smartWizard.min.js"></script>
+    <script type="text/javascript">
+        ((function ($) {
+            setInterval(function () {
+                $.post('/api/heartbeat');
+            }, 1000);
+            $(document).ready(function () {
+                $sw = $('#smartwizard');
+                $("#mailconfigForm").on('submit', function (e) {
+                    var url = "/api/sendmail"; // the script where you handle the form input.
+
+                    $.ajax({
+                        type: "POST",
+                        url: url,
+                        data: $("#mailconfigForm").serialize(), // serializes the form's elements.
+                        success: function (data) {
+                            alert(data); // show response from the php script.
+                        }
+                    });
+
+                    e.preventDefault();
+                });
+                var btnFinish = $('<button></button>').text('Finish')
+                        .addClass('btn btn-info btn-finish')
+                        .attr("disabled", "disabled")
+                        .on('click', function () {
+                            if (!$(this).hasAttribute('disabled')) {
+                                var elmForm = $("#mailconfigForm");
+                                if (elmForm) {
+                                    elmForm.validate();
+                                    if (!elmForm.valid()) {
+                                        alert('Oops we still have error in the form');
+                                        return false;
+                                    } else {
+                                        elmForm.submit();
+                                        return false;
+                                    }
+                                }
+                            }
+                        });
+                var btnCancel = $('<button></button>').text('Cancel')
+                        .addClass('btn btn-danger')
+                        .on('click', function () {
+                            $('#smartwizard').smartWizard("reset");
+                            $('#mailconfigForm').find("input, textarea").val("");
+                        });
+                $sw.smartWizard({
+                    theme: 'arrows',
+                    transitionEffect: 'fade',
+                    lang: {  // Language variables
+                        next: '>>',
+                        previous: '<<'
+                    },
+                    toolbarSettings: {
+                        toolbarPosition: 'top', // none, top, bottom, both
+                        toolbarButtonPosition: 'right', // left, right
+                        toolbarExtraButtons: [btnFinish, btnCancel]
+                    }
+                });
+
+                $sw.on("leaveStep", function (e, anchorObject, stepNumber, stepDirection) {
+                    var elmForm = $("#mailconfigForm");
+                    // stepDirection === 'forward' :- this condition allows to do the form validation
+                    // only on forward navigation, that makes easy navigation on backwards still do the validation when going next
+                    if (stepDirection === 'forward' && elmForm) {
+                        elmForm.validate();
+                        if (!elmForm.valid()) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
+
+                $sw.on("showStep", function(e, anchorObject, stepNumber, stepDirection) {
+                    // Enable finish button only on last step
+                    if (stepNumber < 3) {
+                        $('.btn-finish').attr('disabled', 'disabled');
+                    } else {
+                        $('.btn-finish').removeAttr('disabled');
+                    }
+                });
+            });
+        }))(jQuery);
+        </script>
+</body>
+</html>
