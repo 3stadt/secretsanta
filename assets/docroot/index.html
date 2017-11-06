@@ -8,6 +8,7 @@
     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
     <link href="smartwizard/dist/css/smart_wizard.min.css" rel="stylesheet" type="text/css" />
     <link href="smartwizard/dist/css/smart_wizard_theme_arrows.min.css" rel="stylesheet" type="text/css" />
+    <link href="summernote/summernote.css" rel="stylesheet" type="text/css" />
     <style type="text/css">
         .error {
             color:red;
@@ -18,10 +19,10 @@
 <form action="#" id="mailconfigForm" role="form" data-toggle="validator" method="post" accept-charset="utf-8">
     <div id="smartwizard">
         <ul>
-            <li><a href="#step-1">E-Mail<br /><small>Smtp Data</small></a></li>
-            <li><a href="#step-2">Step Title<br /><small>Step description</small></a></li>
-            <li><a href="#step-3">Step Title<br /><small>Step description</small></a></li>
-            <li><a href="#step-4">Step Title<br /><small>Step description</small></a></li>
+            <li><a href="#step-1">E-Mail<br /><small>Account data</small></a></li>
+            <li><a href="#step-2">E-Mail<br /><small>Set the subject</small></a></li>
+            <li><a href="#step-3">Participants<br /><small>Include yourself!</small></a></li>
+            <li><a href="#step-4">Template<br /><small>Edit the e-mail content</small></a></li>
         </ul>
         <div>
             <div id="step-1" class="">
@@ -29,63 +30,159 @@
                     <h2>Deine SMTP Daten</h2>
                     <div class="form-group">
                         <p>
-                            <label for="smtpusername">Username:</label>
-                            <input type="text" class="form-control" name="smtpusername" id="smtpusername"
+                            <label for="SmtpUser">Username:</label>
+                            <input type="text" class="form-control" name="SmtpUser" id="smtpusername"
                                    placeholder="SMTP username" required>
                         </p>
                         <p>
-                            <label for="smtppassword">Passwort:</label>
-                            <input type="password" class="form-control" name="smtppassword" id="smtppassword" required>
+                            <label for="SmtpPass">Password:</label>
+                            <input type="password" class="form-control" name="SmtpPass" id="smtppassword" required>
                         </p>
                         <p>
-                            <label for="smtpfrom">From Address:</label>
-                            <input type="email" class="form-control" name="smtpfrom" id="smtpfrom" required>
+                            <label for="SmtpFrom">From Address:</label>
+                            <input type="email" class="form-control" name="SmtpFrom" id="smtpfrom" required>
                         </p>
                         <p>
-                            <label for="smtpserver">Server name:</label>
-                            <input type="text" class="form-control" name="smtpserver" id="smtpserver"
+                            <label for="SmtpServer">Server name:</label>
+                            <input type="text" class="form-control" name="SmtpServer" id="smtpserver"
                                    value="smtp.gmail.com" required>
                         </p>
                         <p>
-                            <label for="smtpport">Server port:</label>
-                            <input type="number" class="form-control" name="smtpport" id="smtpport" value="587"
+                            <label for="SmtpPort">Server port:</label>
+                            <input type="number" class="form-control" name="SmtpPort" id="smtpport" value="587"
                                    required>
                         </p>
                     </div>
                 </div>
             </div>
             <div id="step-2" class="">
-                Step Content
+                <div class="form-group">
+                    <p>
+                        <label for="Subject">E-Mail subject:</label>
+                        <input type="text" class="form-control" name="Subject" id="subject" placeholder="The subject of the e-mails. %s will be replaced by the recepient name"
+                               required>
+                    </p>
+                </div>
             </div>
             <div id="step-3" class="">
-                Step Content
+                <div class="container">
+                    <div class="row clearfix">
+                        <div class="col-md-12 column">
+                            <p>
+                                <label for="SmtpPort">Seed (use an old one to get the same random pairing again):</label>
+                                <input type="number" class="form-control" name="Seed" id="seed" placeholder="optional">
+                            </p>
+                            <table class="table table-bordered table-hover" id="participants">
+                                <thead>
+                                <tr>
+                                    <th class="text-center">
+                                        #
+                                    </th>
+                                    <th class="text-center">
+                                        Name
+                                    </th>
+                                    <th class="text-center">
+                                        E-Mail
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr id='participant0'>
+                                    <td>
+                                        1
+                                    </td>
+                                    <td>
+                                        <input type="text" name='Participants[0].Name' placeholder='Name'
+                                               class="form-control input-md" required/>
+                                    </td>
+                                    <td>
+                                        <input type="text" name='Participants[0].Email' placeholder='E-Mail'
+                                               class="form-control input-md" required/>
+                                    </td>
+                                </tr>
+                                <tr id='participant1'>
+                                    <td>
+                                        2
+                                    </td>
+                                    <td>
+                                        <input type="text" name='Participants[1].Name' placeholder='Name'
+                                               class="form-control input-md" required/>
+                                    </td>
+                                    <td>
+                                        <input type="text" name='Participants[1].Email' placeholder='E-Mail'
+                                               class="form-control input-md" required/>
+                                    </td>
+                                </tr>
+                                <tr id='participant2'>
+                                    <td>
+                                        3
+                                    </td>
+                                    <td>
+                                        <input type="text" name='Participants[2].Name' placeholder='Name'
+                                               class="form-control input-md" required/>
+                                    </td>
+                                    <td>
+                                        <input type="text" name='Participants[2].Email' placeholder='E-Mail'
+                                               class="form-control input-md" required/>
+                                    </td>
+                                </tr>
+                                <tr id='participant3'></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <a id="add_row" class="btn btn-default pull-left">Add Row</a>
+                    <a id='delete_row' class="pull-right btn btn-default">Delete Row</a>
+                </div>
             </div>
             <div id="step-4" class="">
-                Step Content
+                <div class="summernote">
+                    <h2>Hello {{.Santa}}!</h2>
+                    <p>You are {{.Presentee}}'s santa!</p>
+                    <p>And remember, do not spend more than $15. ;-)</p>
+                </div>
             </div>
         </div>
     </div>
 </form>
     <script src="jquery/jquery-3.2.1.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="jquery/jquery.validate.min.js"></script>
     <script src="jquery/localization/messages_de.min.js"></script>
     <script type="text/javascript" src="smartwizard/dist/js/jquery.smartWizard.min.js"></script>
+    <script type="text/javascript" src="summernote/summernote.min.js"></script>
     <script type="text/javascript">
         ((function ($) {
             setInterval(function () {
                 $.post('/api/heartbeat');
             }, 1000);
             $(document).ready(function () {
+                var i=3;
+                $("#add_row").click(function(){
+                    $('#participant'+i).html("<td>"+ (i+1) +"</td><td><input name='Participants["+i+"].Name' type='text' placeholder='Name' class='form-control input-md'  /></td><td><input  name='Participants["+i+"].Email' type='text' placeholder='E-Mail'  class='form-control input-md'></td></td>");
+
+                    $('#participants').append('<tr id="participant'+(i+1)+'"></tr>');
+                    i++;
+                });
+                $("#delete_row").click(function(){
+                    if(i>3){
+                        $("#participant"+(i-1)).html('');
+                        i--;
+                    }
+                });
+
                 $sw = $('#smartwizard');
                 $("#mailconfigForm").on('submit', function (e) {
-                    var url = "/api/sendmail"; // the script where you handle the form input.
-
+                    var url = "/api/sendmail";
+                    var data = $("#mailconfigForm").serializeArray();
+                    var html = $('.summernote').summernote('code');
+                    data.push({name: "MailContent", value: html});
                     $.ajax({
                         type: "POST",
                         url: url,
-                        data: $("#mailconfigForm").serialize(), // serializes the form's elements.
+                        data: $.param(data), // serializes the form's elements.
                         success: function (data) {
-                            alert(data); // show response from the php script.
+                            console.info(data); //TODO show response on site
                         }
                     });
 
@@ -95,7 +192,7 @@
                         .addClass('btn btn-info btn-finish')
                         .attr("disabled", "disabled")
                         .on('click', function () {
-                            if (!$(this).hasAttribute('disabled')) {
+                            if (!$(this)[0].hasAttribute('disabled')) {
                                 var elmForm = $("#mailconfigForm");
                                 if (elmForm) {
                                     elmForm.validate();
@@ -117,6 +214,7 @@
                         });
                 $sw.smartWizard({
                     theme: 'arrows',
+                    keyNavigation: false,
                     transitionEffect: 'fade',
                     lang: {  // Language variables
                         next: '>>',
@@ -149,6 +247,19 @@
                     } else {
                         $('.btn-finish').removeAttr('disabled');
                     }
+                });
+                $('.summernote').summernote({
+                    shortcuts: false,
+                    height: 500,
+                    toolbar: [
+                        ['style', ['style']],
+                        ['font', ['bold', 'underline', 'clear']],
+                        ['fontname', ['fontname']],
+                        ['color', ['color']],
+                        ['para', ['ul', 'ol']],
+                        ['insert', ['link', 'picture']],
+                        ['view', ['fullscreen', 'codeview']]
+                    ]
                 });
             });
         }))(jQuery);

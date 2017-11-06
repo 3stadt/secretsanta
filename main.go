@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/hoisie/web"
+	"github.com/monoculum/formam"
 	"github.com/phayes/freeport"
 	"github.com/skratchdot/open-golang/open"
 	"io/ioutil"
@@ -17,6 +19,23 @@ var (
 	logger    = log.New(ioutil.Discard, "", log.Ldate|log.Ltime|log.Lshortfile)
 )
 
+type Participant struct {
+	Name  string
+	Email string
+}
+
+type Formdata struct {
+	SmtpUser     string
+	SmtpPass     string
+	SmtpFrom     string
+	SmtpServer   string
+	SmtpPort     int
+	Subject      string
+	Participants []Participant
+	MailContent  string
+	Seed         string
+}
+
 func main() {
 	port := getFreePort()
 	s := web.NewServer()
@@ -28,7 +47,9 @@ func main() {
 	s.Post("/api/heartbeat", heartbeat)
 	s.Post("/api/sendmail", sendMail)
 	showBrowser("http://127.0.0.1:" + port)
-	go checkHeartbeat(s)
+	if len(os.Args) < 2 || os.Args[1] != "dev" {
+		go checkHeartbeat(s)
+	}
 	s.Run("127.0.0.1:" + port)
 }
 
@@ -61,7 +82,18 @@ func heartbeat() string {
 }
 
 func sendMail(ctx *web.Context) string {
-	return fmt.Sprintf("%v", ctx.Request.PostForm)
+	r := ctx.Request
+	r.ParseForm()
+	fd := Formdata{}
+	dec := formam.NewDecoder(&formam.DecoderOptions{})
+	if err := dec.Decode(r.Form, &fd); err != nil {
+		return err.Error()
+	}
+	b, err := json.Marshal(fd)
+	if err != nil {
+		return err.Error()
+	}
+	return fmt.Sprintf("%v", string(b))
 }
 
 func getFreePort() string {
