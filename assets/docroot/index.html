@@ -8,7 +8,8 @@
     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
     <link href="smartwizard/dist/css/smart_wizard.min.css" rel="stylesheet" type="text/css" />
     <link href="smartwizard/dist/css/smart_wizard_theme_arrows.min.css" rel="stylesheet" type="text/css" />
-    <link href="summernote/summernote.css" rel="stylesheet" type="text/css" />
+    <link href="medium/css/medium-editor.min.css" rel="stylesheet" type="text/css" />
+    <link href="medium/css/themes/bootstrap.min.css" rel="stylesheet" type="text/css" />
     <style type="text/css">
         .error {
             color:red;
@@ -136,10 +137,16 @@
                 </div>
             </div>
             <div id="step-4" class="">
-                <div class="summernote">
-                    <h2>Hello {{.Santa}}!</h2>
-                    <p>You are {{.Presentee}}'s santa!</p>
-                    <p>And remember, do not spend more than $15. ;-)</p>
+                <div class="form-group">
+                    <h2>You can edit the E-Mail sent to the participants here:</h2>
+                    <div class="editable" style="border: 1px solid darkslategray; border-radius: 5px; padding: 10px; margin: 10px;">
+                        <h1>Hello {{.Santa}}!</h1>
+                        <h2>You are {{.Presentee}}'s santa!</h2>
+                        <p>And remember, do not spend more than <b>$15</b>. ;-)</p>
+                    </div>
+                    <p>Please make sure to include <code>{{.Santa}}</code> and <code>{{.Presentee}}</code>, these are neccessary placeholders.</p>
+                    <p><input type="checkbox" id="toggleMdSource"> Toggle source</p>
+                    <textarea name="MailContent" rows="10" class="markdown form-control hidden"></textarea>
                 </div>
             </div>
         </div>
@@ -150,7 +157,9 @@
     <script src="jquery/jquery.validate.min.js"></script>
     <script src="jquery/localization/messages_de.min.js"></script>
     <script type="text/javascript" src="smartwizard/dist/js/jquery.smartWizard.min.js"></script>
-    <script type="text/javascript" src="summernote/summernote.min.js"></script>
+    <script type="text/javascript" src="medium/js/medium-editor.min.js"></script>
+    <script type="text/javascript" src="medium/js/to-markdown.js"></script>
+    <script type="text/javascript" src="showdown/showdown.min.js"></script>
     <script type="text/javascript">
         ((function ($) {
             setInterval(function () {
@@ -158,6 +167,7 @@
             }, 1000);
             $(document).ready(function () {
                 var i=3;
+                var sc = new showdown.Converter();
                 $("#add_row").click(function(){
                     $('#participant'+i).html("<td>"+ (i+1) +"</td><td><input name='Participants["+i+"].Name' type='text' placeholder='Name' class='form-control input-md'  /></td><td><input  name='Participants["+i+"].Email' type='text' placeholder='E-Mail'  class='form-control input-md'></td></td>");
 
@@ -170,13 +180,10 @@
                         i--;
                     }
                 });
-
                 $sw = $('#smartwizard');
                 $("#mailconfigForm").on('submit', function (e) {
                     var url = "/api/sendmail";
                     var data = $("#mailconfigForm").serializeArray();
-                    var html = $('.summernote').summernote('code');
-                    data.push({name: "MailContent", value: html});
                     $.ajax({
                         type: "POST",
                         url: url,
@@ -190,20 +197,21 @@
                 });
                 var btnFinish = $('<button></button>').text('Finish')
                         .addClass('btn btn-info btn-finish')
-                        .attr("disabled", "disabled")
+                        // .attr("disabled", "disabled") TODO enable before commit
                         .on('click', function () {
                             if (!$(this)[0].hasAttribute('disabled')) {
                                 var elmForm = $("#mailconfigForm");
-                                if (elmForm) {
-                                    elmForm.validate();
-                                    if (!elmForm.valid()) {
-                                        alert('Oops we still have error in the form');
-                                        return false;
-                                    } else {
-                                        elmForm.submit();
-                                        return false;
-                                    }
-                                }
+                                elmForm.submit();
+                                // if (elmForm) {
+                                //     elmForm.validate();
+                                //     if (!elmForm.valid()) {
+                                //         alert('Oops we still have error in the form');
+                                //         return false;
+                                //     } else {
+                                //         elmForm.submit();
+                                //         return false;
+                                //     }
+                                // } TODO enable before commit
                             }
                         });
                 var btnCancel = $('<button></button>').text('Cancel')
@@ -226,19 +234,18 @@
                         toolbarExtraButtons: [btnFinish, btnCancel]
                     }
                 });
-
-                $sw.on("leaveStep", function (e, anchorObject, stepNumber, stepDirection) {
-                    var elmForm = $("#mailconfigForm");
-                    // stepDirection === 'forward' :- this condition allows to do the form validation
-                    // only on forward navigation, that makes easy navigation on backwards still do the validation when going next
-                    if (stepDirection === 'forward' && elmForm) {
-                        elmForm.validate();
-                        if (!elmForm.valid()) {
-                            return false;
-                        }
-                    }
-                    return true;
-                });
+                // $sw.on("leaveStep", function (e, anchorObject, stepNumber, stepDirection) {
+                //     var elmForm = $("#mailconfigForm");
+                //     // stepDirection === 'forward' :- this condition allows to do the form validation
+                //     // only on forward navigation, that makes easy navigation on backwards still do the validation when going next
+                //     if (stepDirection === 'forward' && elmForm) {
+                //         elmForm.validate();
+                //         if (!elmForm.valid()) {
+                //             return false;
+                //         }
+                //     }
+                //     return true;
+                // }); TODO enable before commit
 
                 $sw.on("showStep", function(e, anchorObject, stepNumber, stepDirection) {
                     // Enable finish button only on last step
@@ -248,19 +255,33 @@
                         $('.btn-finish').removeAttr('disabled');
                     }
                 });
-                $('.summernote').summernote({
-                    shortcuts: false,
-                    height: 500,
-                    toolbar: [
-                        ['style', ['style']],
-                        ['font', ['bold', 'underline', 'clear']],
-                        ['fontname', ['fontname']],
-                        ['color', ['color']],
-                        ['para', ['ul', 'ol']],
-                        ['insert', ['link', 'picture']],
-                        ['view', ['fullscreen', 'codeview']]
-                    ]
+                var $md = $('.markdown').first();
+                var $editable = $(".editable").first();
+                var med = new MediumEditor(".editable", {
+                    toolbar: {
+                        buttons: ['bold', 'italic', 'underline', 'anchor', 'h2', 'h3', "unorderedlist"]
+                    }
                 });
+                $md.val(toMarkdown($editable.html()));
+                med.subscribe('editableInput', function(event, editable) {
+                    if(!$editable.is(':focus')){
+                        return;
+                    }
+                    $md.val(toMarkdown($editable.html()));
+                });
+                $(document).on('input propertychange', "textarea[name='MailContent']", function () {
+                    if(!$md.is(':focus')){
+                        return;
+                    }
+                    med.setContent(sc.makeHtml($md.val()), 0);
+                });
+                $('#toggleMdSource').on('click', function () {
+                    if($md.hasClass('hidden')) {
+                        $md.removeClass('hidden');
+                    }else{
+                        $md.addClass('hidden');
+                    }
+                })
             });
         }))(jQuery);
         </script>

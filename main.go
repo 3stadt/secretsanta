@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/hoisie/web"
 	"github.com/monoculum/formam"
 	"github.com/phayes/freeport"
@@ -12,6 +10,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"github.com/matcornic/hermes"
+	"github.com/3stadt/secretsanta/mail"
 )
 
 var (
@@ -45,7 +45,7 @@ func main() {
 		StaticDir: "/home/n/go/src/github.com/3stadt/secretsanta/assets/docroot", // TODO make dynamic
 	}
 	s.Post("/api/heartbeat", heartbeat)
-	s.Post("/api/sendmail", sendMail)
+	s.Post("/api/sendmail", formendpoint)
 	showBrowser("http://127.0.0.1:" + port)
 	if len(os.Args) < 2 || os.Args[1] != "dev" {
 		go checkHeartbeat(s)
@@ -81,7 +81,7 @@ func heartbeat() string {
 	return ""
 }
 
-func sendMail(ctx *web.Context) string {
+func formendpoint(ctx *web.Context) string {
 	r := ctx.Request
 	r.ParseForm()
 	fd := Formdata{}
@@ -89,11 +89,42 @@ func sendMail(ctx *web.Context) string {
 	if err := dec.Decode(r.Form, &fd); err != nil {
 		return err.Error()
 	}
-	b, err := json.Marshal(fd)
+	html, err := buildMail(fd.MailContent)
 	if err != nil {
 		return err.Error()
 	}
-	return fmt.Sprintf("%v", string(b))
+	fd.MailContent = html
+	return sendMail(&fd).Error()
+}
+
+func sendMail(fd *Formdata) error {
+	var participants []string
+	md := &mail.MailData{
+		Auth: mail.SmtpAuth{
+			Username: fd.SmtpUser,
+			Password: fd.SmtpPass,
+		},
+	}
+	for _, p := range fd.Participants {
+		participants = append(participants, p.Name+"<"+p.Email+">")
+	}
+	m := mail.NewRequest(participants, fd.SmtpFrom, fd.Subject, fd.MailContent)
+	return m.Send(md)
+}
+
+func buildMail(c string) (string, error) {
+	h := hermes.Hermes{
+		Theme: new(SecretSantaTheme),
+		Product: hermes.Product{
+			Name: "Secret Santa",
+		},
+	}
+	email := hermes.Email{
+		Body: hermes.Body{
+			FreeMarkdown: hermes.Markdown(c),
+		},
+	}
+	return h.GenerateHTML(email)
 }
 
 func getFreePort() string {
