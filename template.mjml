@@ -1,19 +1,14 @@
 <mjml>
-    <mj-body>
-        <mj-container>
-            <mj-section>
-                <mj-column>
-
-                    <mj-image width="500" src="https://i.imgur.com/LNJ252u.jpg"></mj-image>
-
-                    <mj-divider border-color="#cc3333"></mj-divider>
-
-                    <mj-text font-size="24px" color="#000000" font-family="arial">Hallo {{.Santa}}!</mj-text>
-                    <mj-text font-size="16px" color="#000000" font-family="arial">Mit dieser E-Mail erfährst Du, wen Du dieses Jahr bewichteln darfst. Es ist:</mj-text>
-                    <mj-text font-size="48px" color="#cc3333" font-family="helvetica">{{.Presentee}}</mj-text>
-                    <mj-text font-size="16px" color="#000000" font-family="arial">Heb Dir diese E-Mail gut auf oder schreib auf einen Zettel, wen Du bewichtelst. Diese E-Mail kann nicht noch einmal versandt werden. :)</mj-text>
-                </mj-column>
-            </mj-section>
-        </mj-container>
-    </mj-body>
+  <mj-body>
+    <mj-section>
+      <mj-column>
+        <mj-image width="500px" src="https://i.imgur.com/LNJ252u.jpg"></mj-image>
+        <mj-divider border-color="#cc3333"></mj-divider>
+        <mj-text font-size="24px" color="#000000" font-family="arial">Hallo {{.Santa}}!</mj-text>
+        <mj-text font-size="16px" color="#000000" font-family="arial">Mit dieser E-Mail erfährst Du, wen Du dieses Jahr bewichteln darfst. Es ist:</mj-text>
+        <mj-text font-size="48px" color="#cc3333" font-family="helvetica">{{.Presentee}}</mj-text>
+        <mj-text font-size="16px" color="#000000" font-family="arial">Heb Dir diese E-Mail gut auf oder schreib auf einen Zettel, wen Du bewichtelst. Diese E-Mail kann nicht noch einmal versandt werden. :)</mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
 </mjml>

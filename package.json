@@ -1,0 +1,23 @@
+{
+  "name": "secretsanta",
+  "version": "1.0.0",
+  "description": "This tool is mainly for private use. If you want to send secret santa mails via your gmail account, you can use it as well.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/3stadt/secretsanta.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/3stadt/secretsanta/issues"
+  },
+  "homepage": "https://github.com/3stadt/secretsanta#readme",
+  "dependencies": {
+    "mjml": "^4.2.0"
+  }
+}
