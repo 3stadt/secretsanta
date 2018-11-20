@@ -4,3 +4,5 @@
 /assets/*
 /node_modules
 /template.html
+/vendor
+/*.csv
