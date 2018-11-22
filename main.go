@@ -3,19 +3,22 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/3stadt/secretsanta/mail"
 	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/yunabe/easycsv"
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 	"time"
-	"github.com/3stadt/secretsanta/mail"
-	"strconv"
 )
 
 type Config struct {
+	SmtpServer   string
+	SmtpPort     int
 	SmtpUser     string
 	SmtpPass     string
 	FromAddress  string
@@ -40,19 +43,23 @@ func main() {
 	}
 	pairings, seed := pair(participants, seed)
 	m := mail.MailData{
-		Auth: mail.SmtpAuth{
-			Username: c.SmtpUser,
-			Password: c.SmtpPass,
-		},
-		Subject: c.EmailSubject,
+		Server:   c.SmtpServer,
+		Port:     c.SmtpPort,
+		Username: c.SmtpUser,
+		Password: c.SmtpPass,
+		Subject:  c.EmailSubject,
 	}
 	for santa, presentee := range pairings {
 		m.TemplateData = mail.TemplateData{
 			Santa:     santa.Name,
 			Presentee: presentee.Name,
+			Seed:      seed,
 		}
 		req := mail.NewRequest([]string{santa.Email}, c.FromAddress, fmt.Sprintf(m.Subject, santa.Name), "")
-		req.Send(&m)
+		err := req.Send(&m)
+		if err != nil {
+			log.Info(err)
+		}
 	}
 	fmt.Printf("Done. Seed used for pairing was %d, save it and use it as argument to re-send the e-mails from this run. (using the same csv file)\n", *seed)
 }
@@ -106,21 +113,16 @@ func readConfig() (*Config, error) {
 }
 
 func pair(p []participant, seed *int64) (map[participant]participant, *int64) {
-	// shuffle the slice: https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm
 	if seed == nil {
 		now := time.Now().UnixNano()
 		seed = &now
 	}
-	source := rand.NewSource(*seed)
-	random := rand.New(source)
-	for i := len(p) - 1; i > 0; i-- {
-		j := random.Intn(i + 1)
-		p[i], p[j] = p[j], p[i]
-	}
-	// generate pairing
-	lastIndex := len(p) - 1
+	rand.Seed(*seed)
+	perm := rand.Perm(len(p))
+	lastIndex := len(perm) - 1
 	partMap := make(map[participant]participant)
-	for i, part := range p {
+	for i, randIndex := range perm {
+		part := p[randIndex]
 		if i == lastIndex {
 			partMap[part] = p[0]
 			continue

@@ -1,3 +1,5 @@
+SmtpServer=""
+SmtpPort=25
 SmtpUser=""
 SmtpPass=""
 FromAddress=""

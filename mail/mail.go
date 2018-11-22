@@ -1,8 +1,8 @@
 package mail
 
 import (
-	"net/smtp"
 	"bytes"
+	"gopkg.in/gomail.v2"
 	"html/template"
 )
 
@@ -13,17 +13,21 @@ type Mail interface {
 type TemplateData struct {
 	Santa     string
 	Presentee string
-}
-
-type SmtpAuth struct {
-	Username string
-	Password string
+	Seed      *int64
 }
 
 type MailData struct {
-	Auth         SmtpAuth
+	Server       string
+	Port         int
+	Username     string
+	Password     string
 	Subject      string
 	TemplateData TemplateData
+}
+
+type mailReq struct {
+	MailData *MailData
+	Request  *request
 }
 
 type request struct {
@@ -31,7 +35,6 @@ type request struct {
 	to      []string
 	subject string
 	body    string
-	auth    smtp.Auth
 }
 
 func NewRequest(to []string, from, subject, body string) *request {
@@ -44,24 +47,22 @@ func NewRequest(to []string, from, subject, body string) *request {
 }
 
 func (r *request) Send(m *MailData) error {
-	r.auth = smtp.PlainAuth("", m.Auth.Username, m.Auth.Password, "smtp.gmail.com")
 	err := r.parseTemplate("template.html", m.TemplateData)
 	if err != nil {
 		return err
 	}
-	_, err = r.sendViaSmtp()
-	return err
+	d := mailReq{m, r}
+	return d.sendViaSmtp()
 }
 
-func (r *request) sendViaSmtp() (bool, error) {
-	mime := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	subject := "Subject: " + r.subject + "!\n"
-	msg := []byte(subject + mime + "\n" + r.body)
-	addr := "smtp.gmail.com:587"
-	if err := smtp.SendMail(addr, r.auth, r.from, r.to, msg); err != nil {
-		return false, err
-	}
-	return true, nil
+func (r *mailReq) sendViaSmtp() error {
+	m := gomail.NewMessage()
+	m.SetHeader("From", r.Request.from)
+	m.SetHeader("To", r.Request.to...)
+	m.SetHeader("Subject", r.Request.subject)
+	m.SetBody("text/html", r.Request.body)
+	d := gomail.NewPlainDialer(r.MailData.Server, r.MailData.Port, r.MailData.Username, r.MailData.Password)
+	return d.DialAndSend(m)
 }
 
 func (r *request) parseTemplate(templateFileName string, data interface{}) error {

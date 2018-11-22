@@ -7,7 +7,9 @@
         <mj-text font-size="24px" color="#000000" font-family="arial">Hallo {{.Santa}}!</mj-text>
         <mj-text font-size="16px" color="#000000" font-family="arial">Mit dieser E-Mail erfährst Du, wen Du dieses Jahr bewichteln darfst. Es ist:</mj-text>
         <mj-text font-size="48px" color="#cc3333" font-family="helvetica">{{.Presentee}}</mj-text>
-        <mj-text font-size="16px" color="#000000" font-family="arial">Heb Dir diese E-Mail gut auf oder schreib auf einen Zettel, wen Du bewichtelst. Diese E-Mail kann nicht noch einmal versandt werden. :)</mj-text>
+        <mj-text font-size="16px" color="#000000" font-family="arial">Heb Dir diese E-Mail gut auf oder schreib auf einen Zettel, wen Du bewichtelst. :)</mj-text>
+        <mj-text font-size="16px" color="#000000" font-family="arial">Viel Spaß beim Aussuchen!</mj-text>
+        <mj-text font-size="9px" color="#CCCCCC" font-family="arial">Falls die E-Mails noch einmal geschickt werden müssen, der Seed lautet "{{ .Seed }}".</mj-text>
       </mj-column>
     </mj-section>
   </mj-body>
