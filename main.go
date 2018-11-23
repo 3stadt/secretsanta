@@ -124,10 +124,10 @@ func pair(p []participant, seed *int64) (map[participant]participant, *int64) {
 	for i, randIndex := range perm {
 		part := p[randIndex]
 		if i == lastIndex {
-			partMap[part] = p[0]
+			partMap[part] = p[perm[0]]
 			continue
 		}
-		partMap[part] = p[i+1]
+		partMap[part] = p[perm[i+1]]
 	}
 	return partMap, seed
 }
