@@ -5,149 +5,132 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <!--Import Google Icon Font-->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!--Import materialize.css-->
-    <link type="text/css" rel="stylesheet" href="/css/materialize.min.css" media="screen,projection"/>
     <title>SecretSanta</title>
+    <link rel="stylesheet" href="css/materialize.min.css">
+    <link rel="stylesheet" href="css/fonts.css">
+    <style>
+        td, th {
+            padding: 0 1rem;
+            line-height: normal;
+        }
+    </style>
 </head>
 <body>
-
 <div class="container">
 
-    <!--<table class="striped">
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>E-Mail</th>
-        </tr>
-        </thead>
+    <div class="row">
+        <div class="col s12">
+            <h2>Participants (<span data-bind="text: santas().length"></span>)</h2>
+        </div>
+    </div>
 
-        <tbody>
-        <tr>
-            <td>Alvin</td>
-            <td>alvin@example.com</td>
-        </tr>
-        <tr>
-            <td>Alan</td>
-            <td>alan@example.com</td>
-        </tr>
-        <tr>
-            <td>Jonathan</td>
-            <td>jonathan@example.com</td>
-        </tr>
-        </tbody>
-    </table>
-
-    <p>
-    <a class="waves-effect waves-light btn modal-trigger" href="#modal1">Modal</a>
-    </p>-->
-
-    <!-- Modal Structure -->
-    <!--<div id="modal1" class="modal">
-        <form>
-            <div class="modal-content">
-                <div class="row">
-                    <div class="input-field col s6">
-                        <input id="namefield" type="text" class="validate">
-                        <label class="active" for="namefield">Name</label>
-                    </div>
+    <div class="row">
+        <form class="col s12" data-bind="submit: addSanta">
+            <div class="row">
+                <div class="input-field col s6">
+                    <input type="text" id="new_name" data-bind="value: newName">
+                    <label for="new_name">Name</label>
                 </div>
-                <div class="row">
-                    <div class="input-field col s6">
-                        <input id="emailfield" type="text" class="validate">
-                        <label class="active" for="emailfield">E-Mail</label>
-                    </div>
+                <div class="input-field col s6">
+                    <input type="email" id="new_mail" data-bind="value: newMail">
+                    <label for="new_mail">E-Mail</label>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn waves-effect waves-light modal-close" type="submit" name="action">Add
-                    <i class="material-icons right">add</i>
-                </button>
+            <div class="row">
+                <div class="col s12 right-align">
+                    <button class="waves-effect waves-light btn-small green black-text" type="submit">
+                        <i class="material-icons left">add</i>
+                        Add a Santa
+                    </button>
+                    <button data-bind="click: sendMails, enable: santas().length > 2"
+                            class="waves-effect waves-light btn-small blue black-text">
+                        <i class="material-icons left">email</i>
+                        Next step
+                    </button>
+                </div>
             </div>
         </form>
-    </div>-->
+    </div>
 
-
-    <form data-bind="submit: save">
-        <p>You have asked for <span data-bind='text: sesas().length'>&nbsp;</span> sesa(s)</p>
-        <table data-bind='visible: sesas().length > 0'>
-            <thead>
-            <tr>
-                <th>Secret Santa name</th>
-                <th>E-Mail</th>
-                <th/>
-            </tr>
-            </thead>
-            <tbody data-bind='foreach: sesas'>
-            <tr>
-                <td><input class='required' data-bind='value: nick, uniqueName: true'/></td>
-                <td><input class='required number' data-bind='value: email, uniqueName: true'/></td>
-                <td><a href='#' data-bind='click: $root.removeSesa'>Delete</a></td>
-            </tr>
-            </tbody>
-        </table>
-
-        <button data-bind='click: addSesa'>Add Secret Santa</button>
-        <button data-bind='enable: sesas().length > 0' type='submit'>Save List</button>
-    </form>
-
-    <div class="fixed-action-btn">
-        <a class="btn-floating btn-large red">
-            <i class="large material-icons">mode_edit</i>
-        </a>
-        <ul>
-            <li><a class="btn-floating red"><i class="material-icons">insert_chart</i></a></li>
-            <li><a class="btn-floating yellow darken-1"><i class="material-icons">format_quote</i></a></li>
-            <li><a class="btn-floating green"><i class="material-icons">publish</i></a></li>
-            <li><a class="btn-floating blue"><i class="material-icons">attach_file</i></a></li>
-        </ul>
+    <div class="row" data-bind="visible: santas().length > 0">
+        <div class="col s12">
+            <table class="striped">
+                <thead>
+                <tr>
+                    <th>Santa's name</th>
+                    <th>Santa's e-mail address</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody data-bind="foreach: santas">
+                <tr>
+                    <td><p data-bind="text: name"></p></td>
+                    <td><p data-bind="text: mail"></p></td>
+                    <td><a href="#" data-bind="click: $root.removeSanta">Remove</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
-<!--JavaScript at end of body for optimized loading-->
 <script type="text/javascript" src="js/materialize.min.js"></script>
 <script type="text/javascript" src="js/knockout-3.4.2.min.js"></script>
 <script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function () {
-        var elemsFloater = document.querySelectorAll('.fixed-action-btn');
-        M.FloatingActionButton.init(elemsFloater);
+// Class to represent a row in the seat reservations grid
+        function Santa(name, mail) {
+            let self = this;
+            self.name = name;
+            self.mail = mail;
+        }
 
-        // var elemsModal = document.querySelectorAll('.modal');
-        // M.Modal.init(elemsModal, {
-        //     "preventScrolling": true,
-        //     "dismissible": false
-        // });
+// Overall viewmodel for this screen, along with initial state
+        function SantaViewModel() {
+            let self = this;
+            self.newName = ko.observable();
+            self.newMail = ko.observable();
+            self.santas = ko.observableArray([ // todo remove demo data
+                new Santa("Foo", "foo@example.com"),
+                new Santa("Bar", "bar@example.com"),
+                new Santa("Baz", "baz@example.com"),
+                new Santa("Foobar", "foobar@example.com"),
+                new Santa("Foobaz", "foobaz@example.com")
+            ]);
 
-        var SeSaModel = function (sesas) {
-            var self = this;
-            self.sesas = ko.observableArray(sesas);
-
-            self.addSesa = function () {
-                self.sesas.push({
-                    nick: "",
-                    email: ""
-                });
+            self.addSanta = function () {
+                let valid = true;
+                let name = self.newName();
+                let mail = self.newMail();
+                if (!name) {
+                    M.toast({html: '<i class="material-icons left">error</i>invalid name', classes: 'rounded red'});
+                    valid = false;
+                }
+                if (!mail) {
+                    M.toast({html: '<i class="material-icons left">error</i>invalid mail', classes: 'rounded red'});
+                    valid = false;
+                }
+                if (!valid) {
+                    return;
+                }
+                M.Toast.dismissAll();
+                M.toast({html: '<i class="material-icons left">face</i>added ' + name, classes: 'rounded green'});
+                self.newName("");
+                self.newMail("");
+                self.santas.push(new Santa(name, mail));
             };
 
-            self.removeSesa = function (sesa) {
-                self.sesas.remove(sesa);
+            self.removeSanta = function (santa) {
+                self.santas.remove(santa);
             };
 
-            self.save = function (form) {
-                alert("Submit not yet implemented: " + ko.utils.stringifyJson(self.sesas));
-                // To actually transmit to server as a regular form post, write this: ko.utils.postJson($("form")[0], self.sesas);
+            self.sendMails = function () {
+                alert("Let's go!");
             };
-        };
+        }
 
-        var viewModel = new SeSaModel([
-            {nick: "Mister Santa", email: "39.95"},
-            {nick: "Misses Santa", email: "120.00"}
-        ]);
-        ko.applyBindings(viewModel);
+        ko.applyBindings(new SantaViewModel());
 
-        // Activate jQuery Validation
-        //$("form").validate({ submitHandler: viewModel.save });
     });
 </script>
 </body>

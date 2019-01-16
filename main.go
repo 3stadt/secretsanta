@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/zserge/webview"
+	"html/template"
 	"log"
 	"net"
 	"net/http"
@@ -18,6 +19,20 @@ func main() {
 	go func() {
 		http.HandleFunc("/echo", func(w http.ResponseWriter, r *http.Request) {
 
+		})
+		http.HandleFunc("/css/fonts.css", func(w http.ResponseWriter, r *http.Request) {
+			t := template.New("fonts.css")
+			t, err = t.ParseFiles("./templates/css/fonts.css")
+			if err != nil {
+				log.Println(err.Error())
+				return
+			}
+			w.Header().Set("Content-Type", "text/css")
+			err = t.Execute(w, host)
+			if err != nil {
+				log.Println(err.Error())
+				return
+			}
 		})
 		fs := http.FileServer(http.Dir("web"))
 		http.Handle("/", http.StripPrefix("/", fs))
