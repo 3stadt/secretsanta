@@ -1,1 +1,5 @@
 /.idea
+/secretsanta.db
+/secretsanta.db.idx
+/config.db
+/config.db.idx

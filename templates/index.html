@@ -6,8 +6,8 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>SecretSanta</title>
-    <link rel="stylesheet" href="css/materialize.min.css">
-    <link rel="stylesheet" href="css/fonts.css">
+    <link rel="stylesheet" href="{{ . }}/css/materialize.min.css">
+    <link rel="stylesheet" href="{{ . }}/css/fonts.css">
     <style>
         td, th {
             padding: 0 1rem;
@@ -74,34 +74,57 @@
     </div>
 </div>
 
-<script type="text/javascript" src="js/materialize.min.js"></script>
-<script type="text/javascript" src="js/knockout-3.4.2.min.js"></script>
+<script type="text/javascript" src="{{ . }}/js/materialize.min.js"></script>
+<script type="text/javascript" src="{{ . }}/js/knockout-3.4.2.min.js"></script>
 <script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function () {
-// Class to represent a row in the seat reservations grid
+
         function Santa(name, mail) {
             let self = this;
             self.name = name;
             self.mail = mail;
         }
 
-// Overall viewmodel for this screen, along with initial state
         function SantaViewModel() {
-            let self = this;
+            let self = this,
+                newNameField = document.getElementById("new_name");
+
             self.newName = ko.observable();
             self.newMail = ko.observable();
-            self.santas = ko.observableArray([ // todo remove demo data
-                new Santa("Foo", "foo@example.com"),
-                new Santa("Bar", "bar@example.com"),
-                new Santa("Baz", "baz@example.com"),
-                new Santa("Foobar", "foobar@example.com"),
-                new Santa("Foobaz", "foobaz@example.com")
-            ]);
+            self.santas = ko.observableArray([]);
+
+            self.GetSantas = function () {
+                let host = '{{ . }}',
+                    xhr = new XMLHttpRequest();
+                xhr.open('GET', host + '/santas');
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        let santaJson = JSON.parse(xhr.responseText);
+                        self.santas(santaJson.map(function (santa) {
+                            return new Santa(santa.name, santa.mail);
+                        }))
+                    } else {
+                        console.error('Request failed.  Returned status of ' + xhr.status);
+                    }
+                };
+                xhr.send();
+            };
+            self.GetSantas();
+
 
             self.addSanta = function () {
-                let valid = true;
-                let name = self.newName();
-                let mail = self.newMail();
+                let valid = true,
+                    name = self.newName(),
+                    mail = self.newMail();
+                let isUnique = self.isUniqueMail(mail);
+                console.info("UNI", isUnique);
+                if (!isUnique) {
+                    M.toast({
+                        html: '<i class="material-icons left">error</i>mail address already exists',
+                        classes: 'rounded red'
+                    });
+                    valid = false;
+                }
                 if (!name) {
                     M.toast({html: '<i class="material-icons left">error</i>invalid name', classes: 'rounded red'});
                     valid = false;
@@ -114,18 +137,43 @@
                     return;
                 }
                 M.Toast.dismissAll();
-                M.toast({html: '<i class="material-icons left">face</i>added ' + name, classes: 'rounded green'});
+                M.toast({
+                    html: '<i class="material-icons left">done</i>successfully added ' + name,
+                    classes: 'rounded green'
+                });
                 self.newName("");
                 self.newMail("");
-                self.santas.push(new Santa(name, mail));
+                let newSanta = new Santa(name, mail);
+                self.santas.push(newSanta);
+                newNameField.focus();
+                let request = new XMLHttpRequest();
+                let params = Object.keys(newSanta).map(
+                    function (k) {
+                        return encodeURIComponent(k) + '=' + encodeURIComponent(newSanta[k])
+                    }
+                ).join('&');
+                request.open('POST', '{{ . }}/santas', true);
+                request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+                request.send(params);
+            };
+
+            self.isUniqueMail = function (mail) {
+                for (let santa of self.santas()) {
+                    console.info(santa);
+                    if (santa.mail === mail) {
+                        return false;
+                    }
+                }
+                return true;
             };
 
             self.removeSanta = function (santa) {
                 self.santas.remove(santa);
+                //TODO remove from DB
             };
 
             self.sendMails = function () {
-                alert("Let's go!");
+                //TODO implement
             };
         }
 
