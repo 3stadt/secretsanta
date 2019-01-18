@@ -42,11 +42,14 @@
                         <i class="material-icons left">add</i>
                         Add a Santa
                     </button>
-                    <button data-bind="click: sendMails, enable: santas().length > 2"
+                    <button data-bind="click: sendMails, disable: santas().length < 3"
                             class="waves-effect waves-light btn-small blue black-text">
                         <i class="material-icons left">email</i>
                         Next step
                     </button>
+                    <div data-bind="visible: santas().length < 3">
+                        <small>(You need at least three participants to progress)</small>
+                    </div>
                 </div>
             </div>
         </form>
@@ -103,8 +106,6 @@
                         self.santas(santaJson.map(function (santa) {
                             return new Santa(santa.name, santa.mail);
                         }))
-                    } else {
-                        console.error('Request failed.  Returned status of ' + xhr.status);
                     }
                 };
                 xhr.send();
@@ -117,7 +118,6 @@
                     name = self.newName(),
                     mail = self.newMail();
                 let isUnique = self.isUniqueMail(mail);
-                console.info("UNI", isUnique);
                 if (!isUnique) {
                     M.toast({
                         html: '<i class="material-icons left">error</i>mail address already exists',
@@ -159,7 +159,6 @@
 
             self.isUniqueMail = function (mail) {
                 for (let santa of self.santas()) {
-                    console.info(santa);
                     if (santa.mail === mail) {
                         return false;
                     }
