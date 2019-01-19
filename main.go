@@ -1,18 +1,18 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/3stadt/secretsanta/mail"
+	"github.com/BurntSushi/toml"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/recoilme/slowpoke"
 	log "github.com/sirupsen/logrus"
-	"github.com/zserge/webview"
 	"html/template"
 	"math/rand"
-	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"time"
 )
@@ -23,6 +23,14 @@ const (
 	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
 	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
+
+type mailConf struct {
+	Server   string
+	Port     string
+	Username string
+	Password string
+	Subject  string
+}
 
 type conf struct {
 	host    string
@@ -36,65 +44,121 @@ type santa struct {
 }
 
 func main() {
-	file, err := os.OpenFile("secretsanta.log", os.O_CREATE|os.O_WRONLY, 0666)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.SetOutput(file)
+	//file, err := os.OpenFile("secretsanta.log", os.O_CREATE|os.O_WRONLY, 0666)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//log.SetOutput(file)
 	log.SetReportCaller(true)
 	log.SetLevel(log.DebugLevel)
 
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	f, err := os.Create("config.toml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	w := bufio.NewWriter(f)
+	e := toml.NewEncoder(w)
+	err = e.Encode(mail.MailData{
+		Server:   "Server",
+		Port:     9090,
+		Username: "User",
+		Password: "Pass",
+		Subject:  "Subj",
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	defer slowpoke.CloseAll()
-	defer ln.Close()
-
-	c := conf{
-		host:    "http://" + ln.Addr().String(),
-		santaDb: "secretsanta.db",
-		confDb:  "config.db",
-	}
-
-	go func() {
-		r := mux.NewRouter()
-		r.HandleFunc("/santas", c.handlePostSanta).Methods("POST")
-		r.HandleFunc("/santas", c.handleGetSanta).Methods("GET")
-		r.HandleFunc("/santas/{mail}", c.handleDeleteSanta).Methods("DELETE")
-		r.HandleFunc("/css/fonts.css", c.handleFontCss).Methods("GET")
-		r.HandleFunc("/index.html", c.handleIndexHtml).Methods("GET")
-		r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("web"))))
-		log.Error(http.Serve(ln, r))
-	}()
-
-	initialHTML := `<!doctype html>
-	<html lang="en">
-	<head>
-	   <meta charset="UTF-8">
-	   <meta name="viewport"
-	         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-	   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-		<meta http-equiv="refresh" content="0;url=` + c.host + `/index.html">
-	   <title>Document</title>
-	</head>
-	<body>
-	<h1>Starting...</h1>
-	</body>
-	</html>`
-
-	// TODO create headless mode without GUI
-	w := webview.New(webview.Settings{
-		URL:       `data:text/html,` + url.PathEscape(initialHTML),
-		Width:     800,
-		Height:    600,
-		Resizable: true,
-		Debug:     true,
-	})
-
-	w.Run()
+	//ln, err := net.Listen("tcp", "127.0.0.1:0")
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//
+	//defer slowpoke.CloseAll()
+	//defer ln.Close()
+	//
+	//c := conf{
+	//	host:    "http://" + ln.Addr().String(),
+	//	santaDb: "secretsanta.db",
+	//	confDb:  "config.db",
+	//}
+	//
+	//go func() {
+	//	r := mux.NewRouter()
+	//	r.HandleFunc("/santas", c.handlePostSanta).Methods("POST")
+	//	r.HandleFunc("/santas", c.handleGetSanta).Methods("GET")
+	//	r.HandleFunc("/santas/{mail}", c.handleDeleteSanta).Methods("DELETE")
+	//	r.HandleFunc("/css/fonts.css", c.handleFontCss).Methods("GET")
+	//	r.HandleFunc("/index.html", c.handleIndexHtml).Methods("GET")
+	//	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("web"))))
+	//	log.Error(http.Serve(ln, r))
+	//}()
+	//
+	//initialHTML := `<!doctype html>
+	//<html lang="en">
+	//<head>
+	//   <meta charset="UTF-8">
+	//   <meta name="viewport"
+	//         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	//   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+	//	<meta http-equiv="refresh" content="0;url=` + c.host + `/index.html">
+	//   <title>Document</title>
+	//</head>
+	//<body>
+	//<h1>Starting...</h1>
+	//</body>
+	//</html>`
+	//
+	//// TODO create headless mode without GUI
+	//w := webview.New(webview.Settings{
+	//	URL:       `data:text/html,` + url.PathEscape(initialHTML),
+	//	Width:     800,
+	//	Height:    600,
+	//	Resizable: true,
+	//	Debug:     true,
+	//})
+	//
+	//w.Run()
 }
+
+//func (c *conf) handleSendMail(w http.ResponseWriter, r *http.Request) {
+//	vars := mux.Vars(r)
+//	var seed *int64 = nil
+//	if _, ok := vars["seed"]; ok {
+//		userSeed, err := strconv.ParseInt(vars["seed"], 10, 64)
+//		if err != nil {
+//			w.WriteHeader(http.StatusBadRequest)
+//			_, _ = fmt.Fprint(w, err.Error())
+//			return
+//		}
+//		seed = &userSeed
+//	}
+//	santas, err := c.getAllSantas()
+//	if err != nil {
+//		log.Println(err.Error())
+//		return
+//	}
+//	pairings, seed := pair(santas, seed)
+//	m := mail.MailData{
+//		Server:   c.SmtpServer,
+//		Port:     c.SmtpPort,
+//		Username: c.SmtpUser,
+//		Password: c.SmtpPass,
+//		Subject:  c.EmailSubject,
+//	}
+//	for santa, presentee := range pairings {
+//		m.TemplateData = mail.TemplateData{
+//			Santa:     santa.Name,
+//			Presentee: presentee.Name,
+//			Seed:      seed,
+//		}
+//		req := mail.NewRequest([]string{santa.Email}, c.FromAddress, fmt.Sprintf(m.Subject, santa.Name), "")
+//		err := req.Send(&m)
+//		if err != nil {
+//			log.Info(err)
+//		}
+//	}
+//}
 
 func (c *conf) handleIndexHtml(w http.ResponseWriter, r *http.Request) {
 	t := template.New("index.html")
@@ -174,10 +238,22 @@ func (c *conf) saveSanta(r *http.Request) error {
 }
 
 func (c *conf) getAllSantasAsJson() (string, error) {
+	santas, err := c.getAllSantas()
+	if err != nil {
+		return "", errors.Wrap(err, "could not marshal db entry")
+	}
+	b, err := json.Marshal(santas)
+	if err != nil {
+		return "", errors.Wrap(err, "could not marshal db entry")
+	}
+	return string(b), nil
+}
+
+func (c *conf) getAllSantas() ([]santa, error) {
 	santas := []santa{}
 	keys, err := slowpoke.Keys(c.santaDb, nil, 0, 0, true)
 	if err != nil {
-		return "", errors.Wrap(err, "could not read Keys from db")
+		return santas, errors.Wrap(err, "could not read Keys from db")
 	}
 	res := slowpoke.Gets(c.santaDb, keys)
 	for k, val := range res {
@@ -187,16 +263,11 @@ func (c *conf) getAllSantasAsJson() (string, error) {
 		var s santa
 		err = json.Unmarshal(val, &s)
 		if err != nil {
-			return "", errors.Wrap(err, "could not unmarshal db entry")
+			return santas, errors.Wrap(err, "could not unmarshal db entry")
 		}
 		santas = append(santas, s)
 	}
-	b, err := json.Marshal(santas)
-	if err != nil {
-		log.Println(err.Error())
-		return "", errors.Wrap(err, "could not marshal db entry")
-	}
-	return string(b), nil
+	return santas, nil
 }
 
 func pair(p []santa, seed *int64) (map[santa]santa, *int64) {
