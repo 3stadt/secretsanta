@@ -168,7 +168,9 @@
 
             self.removeSanta = function (santa) {
                 self.santas.remove(santa);
-                //TODO remove from DB
+                let request = new XMLHttpRequest();
+                request.open('DELETE', '{{ . }}/santas/'+encodeURIComponent(santa.mail), true);
+                request.send();
             };
 
             self.sendMails = function () {

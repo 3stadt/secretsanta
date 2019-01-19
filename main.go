@@ -3,15 +3,17 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/recoilme/slowpoke"
+	log "github.com/sirupsen/logrus"
 	"github.com/zserge/webview"
 	"html/template"
-	"log"
 	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 )
 
@@ -34,6 +36,14 @@ type santa struct {
 }
 
 func main() {
+	file, err := os.OpenFile("secretsanta.log", os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.SetOutput(file)
+	log.SetReportCaller(true)
+	log.SetLevel(log.DebugLevel)
+
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		log.Fatal(err)
@@ -49,12 +59,14 @@ func main() {
 	}
 
 	go func() {
-		http.HandleFunc("/santas", c.handleSantas)
-		http.HandleFunc("/css/fonts.css", c.handleFontCss)
-		http.HandleFunc("/index.html", c.handleIndexHtml)
-		fs := http.FileServer(http.Dir("web"))
-		http.Handle("/", http.StripPrefix("/", fs))
-		log.Fatal(http.Serve(ln, nil))
+		r := mux.NewRouter()
+		r.HandleFunc("/santas", c.handlePostSanta).Methods("POST")
+		r.HandleFunc("/santas", c.handleGetSanta).Methods("GET")
+		r.HandleFunc("/santas/{mail}", c.handleDeleteSanta).Methods("DELETE")
+		r.HandleFunc("/css/fonts.css", c.handleFontCss).Methods("GET")
+		r.HandleFunc("/index.html", c.handleIndexHtml).Methods("GET")
+		r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("web"))))
+		log.Error(http.Serve(ln, r))
 	}()
 
 	initialHTML := `<!doctype html>
@@ -99,39 +111,48 @@ func (c *conf) handleIndexHtml(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (c *conf) handleSantas(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "GET":
-		allSantas, err := c.getAllSantasAsJson()
-		if err != nil {
-			log.Printf("%+v", errors.Wrap(err, "could not get all santas"))
-			return
-		}
-		_, err = fmt.Fprint(w, allSantas)
-		if err != nil {
-			log.Printf("%+v", errors.Wrap(err, "could not write to ResponseWriter"))
-			return
-		}
-	case "POST":
-		err := c.saveSanta(r)
-		if err != nil {
-			log.Printf("%+v", errors.Wrap(err, "could not save santas"))
-			return
-		}
+func (c *conf) handleGetSanta(w http.ResponseWriter, r *http.Request) {
+	allSantas, err := c.getAllSantasAsJson()
+	if err != nil {
+		log.Errorf("%+v", errors.Wrap(err, "could not get all santas"))
+		return
 	}
+	_, err = fmt.Fprint(w, allSantas)
+	if err != nil {
+		log.Errorf("%+v", errors.Wrap(err, "could not write to ResponseWriter"))
+		return
+	}
+}
+
+func (c *conf) handlePostSanta(w http.ResponseWriter, r *http.Request) {
+	err := c.saveSanta(r)
+	if err != nil {
+		log.Errorf("%+v", errors.Wrap(err, "could not save santas"))
+		return
+	}
+}
+
+func (c *conf) handleDeleteSanta(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	_, err := slowpoke.Delete(c.santaDb, []byte(vars["mail"]))
+	if err != nil {
+		log.Errorf("%+v", errors.Wrap(err, "could not delete santa"))
+		return
+	}
+	return
 }
 
 func (c *conf) handleFontCss(w http.ResponseWriter, r *http.Request) {
 	t := template.New("fonts.css")
 	t, err := t.ParseFiles("./templates/css/fonts.css")
 	if err != nil {
-		log.Printf("%+v", errors.Wrap(err, "could not parse css font template"))
+		log.Errorf("%+v", errors.Wrap(err, "could not parse css font template"))
 		return
 	}
 	w.Header().Set("Content-Type", "text/css")
 	err = t.Execute(w, c.host)
 	if err != nil {
-		log.Printf("%+v", errors.Wrap(err, "could not write to ResponseWriter"))
+		log.Errorf("%+v", errors.Wrap(err, "could not write to ResponseWriter"))
 		return
 	}
 }
@@ -176,6 +197,26 @@ func (c *conf) getAllSantasAsJson() (string, error) {
 		return "", errors.Wrap(err, "could not marshal db entry")
 	}
 	return string(b), nil
+}
+
+func pair(p []santa, seed *int64) (map[santa]santa, *int64) {
+	if seed == nil {
+		now := time.Now().UnixNano()
+		seed = &now
+	}
+	rand.Seed(*seed)
+	perm := rand.Perm(len(p))
+	lastIndex := len(perm) - 1
+	partMap := make(map[santa]santa)
+	for i, randIndex := range perm {
+		part := p[randIndex]
+		if i == lastIndex {
+			partMap[part] = p[perm[0]]
+			continue
+		}
+		partMap[part] = p[perm[i+1]]
+	}
+	return partMap, seed
 }
 
 func generateRandString(n int) string {
