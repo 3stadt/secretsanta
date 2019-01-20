@@ -1,9 +1,0 @@
-Server = "Server"
-Port = 9090
-Username = "User"
-Password = "Pass"
-Subject = "Subj"
-
-[TemplateData]
-  Santa = ""
-  Presentee = ""
