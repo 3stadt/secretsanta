@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/3stadt/secretsanta/mail"
@@ -10,18 +11,15 @@ import (
 	"github.com/pkg/errors"
 	"github.com/recoilme/slowpoke"
 	log "github.com/sirupsen/logrus"
+	"github.com/zserge/webview"
 	"html/template"
+	"io/ioutil"
 	"math/rand"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
-)
-
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-const (
-	letterIdxBits = 6                    // 6 bits to represent a letter index
-	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
 
 type mailConf struct {
@@ -33,9 +31,9 @@ type mailConf struct {
 }
 
 type conf struct {
-	host    string
-	santaDb string
-	confDb  string
+	host     string
+	santaDb  string
+	confFile string
 }
 
 type santa struct {
@@ -52,73 +50,102 @@ func main() {
 	log.SetReportCaller(true)
 	log.SetLevel(log.DebugLevel)
 
-	f, err := os.Create("config.toml")
-	if err != nil {
-		log.Fatal(err)
+	c := conf{
+		santaDb:  "secretsanta.db",
+		confFile: "config.toml",
 	}
-	w := bufio.NewWriter(f)
-	e := toml.NewEncoder(w)
-	err = e.Encode(mail.MailData{
-		Server:   "Server",
-		Port:     9090,
-		Username: "User",
-		Password: "Pass",
-		Subject:  "Subj",
-	})
+
+	mc, err := c.readMailConfig()
+	//err := c.writeMailConfig(&mail.MailData{
+	//	Server: "my.server",
+	//	Port: 234,
+	//	Username: "User",
+	//	Password: "MySuperSecretPassword",
+	//	Subject: "Wohoo %s!",
+	//})
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "could not read mail config"))
+	}
+	log.Infof("%+v", mc)
+	os.Exit(0)
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	//ln, err := net.Listen("tcp", "127.0.0.1:0")
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//
-	//defer slowpoke.CloseAll()
-	//defer ln.Close()
-	//
-	//c := conf{
-	//	host:    "http://" + ln.Addr().String(),
-	//	santaDb: "secretsanta.db",
-	//	confDb:  "config.db",
-	//}
-	//
-	//go func() {
-	//	r := mux.NewRouter()
-	//	r.HandleFunc("/santas", c.handlePostSanta).Methods("POST")
-	//	r.HandleFunc("/santas", c.handleGetSanta).Methods("GET")
-	//	r.HandleFunc("/santas/{mail}", c.handleDeleteSanta).Methods("DELETE")
-	//	r.HandleFunc("/css/fonts.css", c.handleFontCss).Methods("GET")
-	//	r.HandleFunc("/index.html", c.handleIndexHtml).Methods("GET")
-	//	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("web"))))
-	//	log.Error(http.Serve(ln, r))
-	//}()
-	//
-	//initialHTML := `<!doctype html>
-	//<html lang="en">
-	//<head>
-	//   <meta charset="UTF-8">
-	//   <meta name="viewport"
-	//         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-	//   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-	//	<meta http-equiv="refresh" content="0;url=` + c.host + `/index.html">
-	//   <title>Document</title>
-	//</head>
-	//<body>
-	//<h1>Starting...</h1>
-	//</body>
-	//</html>`
-	//
-	//// TODO create headless mode without GUI
-	//w := webview.New(webview.Settings{
-	//	URL:       `data:text/html,` + url.PathEscape(initialHTML),
-	//	Width:     800,
-	//	Height:    600,
-	//	Resizable: true,
-	//	Debug:     true,
-	//})
-	//
-	//w.Run()
+	defer slowpoke.CloseAll()
+	defer ln.Close()
+
+	c.host = "http://" + ln.Addr().String()
+
+	go func() {
+		r := mux.NewRouter()
+		r.HandleFunc("/santas", c.handlePostSanta).Methods("POST")
+		r.HandleFunc("/santas", c.handleGetSanta).Methods("GET")
+		r.HandleFunc("/santas/{mail}", c.handleDeleteSanta).Methods("DELETE")
+		r.HandleFunc("/css/fonts.css", c.handleFontCss).Methods("GET")
+		r.HandleFunc("/index.html", c.handleIndexHtml).Methods("GET")
+		r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("web"))))
+		log.Error(http.Serve(ln, r))
+	}()
+
+	initialHTML := `<!doctype html>
+	<html lang="en">
+	<head>
+	  <meta charset="UTF-8">
+	  <meta name="viewport"
+	        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<meta http-equiv="refresh" content="0;url=` + c.host + `/index.html">
+	  <title>Document</title>
+	</head>
+	<body>
+	<h1>Starting...</h1>
+	</body>
+	</html>`
+
+	// TODO create headless mode without GUI
+	w := webview.New(webview.Settings{
+		URL:       `data:text/html,` + url.PathEscape(initialHTML),
+		Width:     800,
+		Height:    600,
+		Resizable: true,
+		Debug:     true,
+	})
+
+	w.Run()
+}
+
+func (c *conf) readMailConfig() (*mail.MailData, error) {
+	var mailConf mail.MailData
+	log.Infof("reading config file %s", c.confFile)
+	b, err := ioutil.ReadFile(c.confFile)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := toml.Decode(string(b), &mailConf); err != nil {
+		return nil, err
+	}
+	pwByte, err := base64.StdEncoding.DecodeString(mailConf.Password)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not decode base64 password")
+	}
+	mailConf.Password = string(pwByte)
+	return &mailConf, nil
+}
+
+func (c *conf) writeMailConfig(m *mail.MailData) error {
+	f, err := os.Create(c.confFile)
+	if err != nil {
+		return err
+	}
+	m.Password = base64.StdEncoding.EncodeToString([]byte(m.Password))
+	log.Infof("writing config file %s", c.confFile)
+	w := bufio.NewWriter(f)
+	e := toml.NewEncoder(w)
+	err = e.Encode(m)
+	return err
 }
 
 //func (c *conf) handleSendMail(w http.ResponseWriter, r *http.Request) {
@@ -288,23 +315,4 @@ func pair(p []santa, seed *int64) (map[santa]santa, *int64) {
 		partMap[part] = p[perm[i+1]]
 	}
 	return partMap, seed
-}
-
-func generateRandString(n int) string {
-	src := rand.NewSource(time.Now().UnixNano())
-	b := make([]byte, n)
-	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
-	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
-		if remain == 0 {
-			cache, remain = src.Int63(), letterIdxMax
-		}
-		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
-			b[i] = letterBytes[idx]
-			i--
-		}
-		cache >>= letterIdxBits
-		remain--
-	}
-
-	return string(b)
 }
