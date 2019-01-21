@@ -22,6 +22,7 @@ type MailData struct {
 	Username     string
 	Password     string
 	Subject      string
+	FromAddress string
 	TemplateData TemplateData
 }
 
