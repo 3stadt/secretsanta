@@ -46,11 +46,17 @@ func main() {
 
 	go func() {
 		r := mux.NewRouter()
-		r.HandleFunc("/mailconfig", c.handlePostMailConfig).Methods("POST")
-		r.HandleFunc("/mailconfig", c.handleGetMailConfig).Methods("GET")
+		// Create a new Santa
 		r.HandleFunc("/santas", c.handlePostSanta).Methods("POST")
+		// Get all Santas as JSON
 		r.HandleFunc("/santas", c.handleGetSanta).Methods("GET")
+		// Delete a Santa from DB, using the mail address as identifier
 		r.HandleFunc("/santas/{mail}", c.handleDeleteSanta).Methods("DELETE")
+		// Send the actual mail. Returns an error if no config is saved yet
+		r.HandleFunc("/mail/send", c.handleSendMail).Methods("POST")
+		// The mail preview is embedded in the preview.html file, this endpoint shows the actual mail and is not the preview page
+		r.HandleFunc("/mail/template/{filename}", c.handlePreviewMail).Methods("GET")
+
 		r.HandleFunc("/css/fonts.css", c.handleFontCss).Methods("GET")
 		r.HandleFunc("/index.html", c.handleIndexHtml).Methods("GET")
 		r.HandleFunc("/preview.html", c.handlePreviewHtml).Methods("GET")
@@ -66,11 +72,12 @@ func main() {
 	}
 
 	w := webview.New(webview.Settings{
+		Title: "The secret santa matcher",
 		URL:       `data:text/html,` + url.PathEscape(html.String()),
 		Width:     800,
-		Height:    600,
+		Height:    900,
 		Resizable: true,
-		Debug:     true,
+		Debug:     false,
 	})
 
 	w.Run()

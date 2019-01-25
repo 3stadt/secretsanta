@@ -11,5 +11,20 @@
 
 <h1>// TODO implement</h1> <!-- TODO implement -->
 
+<p><a href="#" onclick="t(1);">template 1</a></p>
+<p><a href="#" onclick="t(2);">template 2</a></p>
+
+<hr>
+
+<object id="preview" data="{{ . }}/mail/template/001.html" width="650" height="700" type="text/html">
+    Preview could not be displayed, sorry.
+</object>
+
+<script>
+    function t(num){
+        document.getElementById("preview").setAttribute("data", "{{ . }}/mail/template/00"+num+".html");
+    }
+</script>
+
 </body>
 </html>
