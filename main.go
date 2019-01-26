@@ -61,7 +61,8 @@ func main() {
 
 		r.HandleFunc("/css/fonts.css", c.handleFontCss).Methods("GET")
 		r.HandleFunc("/index.html", c.handleIndexHtml).Methods("GET")
-		r.HandleFunc("/preview.html", c.handlePreviewHtml).Methods("GET")
+		r.HandleFunc("/preview.html", c.handlePreviewPage).Methods("GET")
+		r.HandleFunc("/config.html", c.handleConfigPage).Methods("GET")
 		r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("web"))))
 		log.Error(http.Serve(ln, r))
 	}()

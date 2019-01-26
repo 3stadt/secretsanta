@@ -60,7 +60,7 @@ func (c *conf) handlePreviewMail(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (c *conf) handlePreviewHtml(w http.ResponseWriter, r *http.Request) {
+func (c *conf) handlePreviewPage(w http.ResponseWriter, r *http.Request) {
 	t := template.New("preview.html")
 	t, err := t.ParseFiles("./templates/preview.html")
 	if err != nil {

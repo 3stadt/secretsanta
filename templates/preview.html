@@ -8,12 +8,6 @@
     <title>SecretSanta</title>
     <link rel="stylesheet" href="{{ . }}/css/materialize.min.css">
     <link rel="stylesheet" href="{{ . }}/css/fonts.css">
-    <style>
-        td, th {
-            padding: 0 1rem;
-            line-height: normal;
-        }
-    </style>
 </head>
 <body>
 <div class="container">
@@ -23,40 +17,45 @@
             <h2>Preview</h2>
         </div>
     </div>
-
-    <div class="row">
-        <form class="col s12">
-            <div class="row">
-                <div class="input-field col s6">
-                    <select id="templateSelect"
-                            class="browser-default"
-                            name="templateSelect"
-                            data-bind="options: availableTemplates,
+    <form class="col s12">
+        <div class="row">
+            <div class="input-field col s6">
+                <select id="templateSelect"
+                        class="browser-default"
+                        name="templateSelect"
+                        data-bind="options: availableTemplates,
                             value: selectedTemplate,
                             valueAllowUnset: true,
                     optionsCaption: 'Select a template...'"></select>
-                </div>
-                <div class="input-field col s6">
-                    <button class="waves-effect waves-light btn-small green black-text" data-bind="click: GetPreviews">
-                        <i class="material-icons left">refresh</i>
-                        Reload
-                    </button>
+            </div>
+            <div class="input-field col s6">
+                <button class="waves-effect waves-light btn-small green black-text" data-bind="click: GetPreviews">
+                    <i class="material-icons left">refresh</i>
+                    Reload
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col s12">
+                Want to create your own? <a href="https://mjml.io/">Mjml</a> is a fantastic and free service for
+                creating beautiful html mails that are displayed nicely in every mail client.<br/>
+                There is an <a href="https://mjml.io/try-it-live">online editor</a>, a <a
+                        href="https://mjmlio.github.io/mjml-app/"></a>
+                desktop application and of course an extensive <a
+                        href="https://mjml.io/documentation/">documentation</a>.<br/>
+                When done, put a new html file inside <a href="#" data-bind="click: OpenExplorer">this folder</a>.<br/>
+                <button data-bind="click: goToConfig, disable: !selectedTemplate()"
+                        class="waves-effect waves-light btn-small blue black-text">
+                    <i class="material-icons left">email</i>
+                    Next step
+                </button>
+                <div data-bind="visible: !selectedTemplate()">
+                    <small>(You need to select a template to progress)</small>
                 </div>
             </div>
-        </form>
-    </div>
-
-    <div class="row">
-        <div class="col s12">
-            Want to create your own? <a href="https://mjml.io/">Mjml</a> is a fantastic and free service for
-            creating beautiful html mails that are displayed nicely in every mail client.<br/>
-            There is an <a href="https://mjml.io/try-it-live">online editor</a>, a <a
-                    href="https://mjmlio.github.io/mjml-app/"></a>
-            desktop application and of course an extensive <a
-                    href="https://mjml.io/documentation/">documentation</a>.<br/>
-            When done, put a new html file inside <a href="#" data-bind="click: OpenExplorer">this folder</a>.
         </div>
-    </div>
+    </form>
+
     <div class="row">
         <div class="col s12">
             <object id="preview" data-bind="attr: { data: previewUrl }" width="650"
@@ -98,6 +97,10 @@
                 xhr.send();
             };
             self.GetPreviews();
+
+            self.goToConfig = function () {
+                window.location = "{{ . }}/config.html";
+            };
 
             self.selectedTemplate = ko.observable();
             self.previewUrl = ko.computed(function () {
