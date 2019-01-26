@@ -13,10 +13,6 @@
             padding: 0 1rem;
             line-height: normal;
         }
-
-        .bottom-sheet {
-            max-height: 70% !important;
-        }
     </style>
 </head>
 <body>
@@ -46,7 +42,7 @@
                         <i class="material-icons left">add</i>
                         Add a Santa
                     </button>
-                    <button data-bind="click: sendMails, disable: santas().length < 3"
+                    <button data-bind="click: goToPreview, disable: santas().length < 3"
                             class="waves-effect waves-light btn-small blue black-text">
                         <i class="material-icons left">email</i>
                         Next step
@@ -81,69 +77,10 @@
     </div>
 </div>
 
-<div id="modal_config" class="modal bottom-sheet">
-    <div class="modal-content">
-        <h4>E-Mail configuration</h4>
-        <div class="row">
-            <form class="col s12" data-bind="submit: saveMailConfig">
-                <div class="row">
-                    <div class="input-field col s6">
-                        <input id="mail_server" name="mail_server" type="text">
-                        <label for="mail_server">SMTP server</label>
-                    </div>
-                    <div class="input-field col s6">
-                        <input id="mail_port" name="mail_port" type="text" class="autocomplete">
-                        <label for="mail_port">SMTP port</label>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="input-field col s6">
-                        SSL
-                        <div class="switch">
-                            <label>
-                                Off
-                                <input checked type="checkbox" name="use_ssl">
-                                <span class="lever"></span>
-                                On
-                            </label>
-                        </div>
-                    </div>
-                    <div class="input-field col s6"></div>
-                </div>
-
-                <div class="row">
-                    <div class="col s12 right-align">
-                        <button class="waves-effect waves-light btn-small green black-text" type="submit">
-                            <i class="material-icons left">save</i>
-                            Save
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <script type="text/javascript" src="{{ . }}/js/materialize.min.js"></script>
 <script type="text/javascript" src="{{ . }}/js/knockout-3.4.2.min.js"></script>
 <script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function () {
-
-        const modalConfig = document.getElementById("modal_config");
-        let modalConfigInstance = M.Modal.init(modalConfig, {
-            dismissible: false,
-            endingTop: "10%"
-        });
-
-        const mailPort = document.getElementById("mail_port");
-        M.Autocomplete.init(mailPort, {
-            data: {
-                "25": null,
-                "465": null,
-                "587": null,
-                "2525": null
-            }
-        });
 
         function Santa(name, mail) {
             let self = this;
@@ -159,7 +96,7 @@
             self.newMail = ko.observable();
             self.santas = ko.observableArray([]);
 
-            self.GetSantas = function () {
+            self.GetPreviews = function () {
                 let host = '{{ . }}',
                     xhr = new XMLHttpRequest();
                 xhr.open('GET', host + '/santas');
@@ -173,7 +110,7 @@
                 };
                 xhr.send();
             };
-            self.GetSantas();
+            self.GetPreviews();
 
 
             self.addSanta = function () {
@@ -236,15 +173,8 @@
                 request.send();
             };
 
-            self.saveMailConfig = function () {
-                // TODO implement
-                modalConfigInstance.close();
+            self.goToPreview = function () {
                 window.location = "{{ . }}/preview.html";
-            };
-
-            self.sendMails = function () {
-
-                modalConfigInstance.open();
             };
         }
 

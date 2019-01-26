@@ -6,36 +6,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"html/template"
 	"net/http"
-	"path/filepath"
 	"strconv"
 )
-
-func (c *conf) handlePreviewMail(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	filename := filepath.Base(vars["filename"]) // prevent changing folder via relative path
-
-	t := template.New(filename)
-	t, err := t.ParseFiles(fmt.Sprintf("./templates/mail/%s", filename))
-	if err != nil {
-		log.Println(err.Error())
-		return
-	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	data := struct {
-		Santa      string
-		SantaMatch string
-	}{
-		"Danielle",
-		"Benjamin",
-	}
-	err = t.Execute(w, data)
-	if err != nil {
-		log.Println(err.Error())
-		return
-	}
-}
 
 func (c *conf) handleSendMail(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)

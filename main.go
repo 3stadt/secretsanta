@@ -56,6 +56,8 @@ func main() {
 		r.HandleFunc("/mail/send", c.handleSendMail).Methods("POST")
 		// The mail preview is embedded in the preview.html file, this endpoint shows the actual mail and is not the preview page
 		r.HandleFunc("/mail/template/{filename}", c.handlePreviewMail).Methods("GET")
+		r.HandleFunc("/previews/available", c.handlePreviewList).Methods("GET")
+		r.HandleFunc("/os/openExplorer", c.handleOpenTemplateFolder).Methods("GET")
 
 		r.HandleFunc("/css/fonts.css", c.handleFontCss).Methods("GET")
 		r.HandleFunc("/index.html", c.handleIndexHtml).Methods("GET")
@@ -77,7 +79,7 @@ func main() {
 		Width:     800,
 		Height:    900,
 		Resizable: true,
-		Debug:     false,
+		Debug:     true,
 	})
 
 	w.Run()
