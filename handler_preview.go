@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/3stadt/secretsanta/explorer"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"html/template"
@@ -11,7 +12,7 @@ import (
 )
 
 func (c *conf) handleOpenTemplateFolder(w http.ResponseWriter, r *http.Request) {
-	openExplorer()
+	explorer.Open()
 }
 
 func (c *conf) handlePreviewList(w http.ResponseWriter, r *http.Request) {

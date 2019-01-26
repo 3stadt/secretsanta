@@ -1,4 +1,4 @@
-package main
+package explorer
 
 import (
 	"log"
@@ -6,8 +6,8 @@ import (
 	"os/exec"
 )
 
-func openExplorer() {
-	cmd := exec.Command("xdg-open", "./templates/mail/")
+func Open() {
+	cmd := exec.Command("open", "./templates/mail/")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
