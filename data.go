@@ -3,10 +3,10 @@ package main
 import "github.com/3stadt/secretsanta/mail"
 
 type conf struct {
-	host     string
+	Host     string
 	santaDb  string
 	confFile string
-	mailData *mail.MailData
+	MailData *mail.MailData
 }
 
 type santa struct {

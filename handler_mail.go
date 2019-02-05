@@ -46,13 +46,13 @@ func (c *conf) handleSendMail(w http.ResponseWriter, r *http.Request) {
 	pairings, seed := pair(santas, seed)
 
 	for santa, presentee := range pairings {
-		c.mailData.TemplateData = mail.TemplateData{
+		c.MailData.TemplateData = mail.TemplateData{
 			Santa:     santa.Name,
 			Presentee: presentee.Name,
 			Seed:      seed,
 		}
-		req := mail.NewRequest([]string{santa.Mail}, c.mailData.FromAddress, fmt.Sprintf(c.mailData.Subject, santa.Name), "")
-		err := req.Send(c.mailData)
+		req := mail.NewRequest([]string{santa.Mail}, c.MailData.FromAddress, fmt.Sprintf(c.MailData.Subject, santa.Name), "")
+		err := req.Send(c.MailData)
 		if err != nil {
 			log.Errorf("%+v", errors.Wrap(err, "could not send mail"))
 			return

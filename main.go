@@ -32,7 +32,7 @@ func main() {
 	if err != nil {
 		log.Info(errors.Wrap(err, "could not read mail config"))
 	}
-	c.mailData = mc
+	c.MailData = mc
 
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -42,7 +42,7 @@ func main() {
 	defer slowpoke.CloseAll()
 	defer ln.Close()
 
-	c.host = "http://" + ln.Addr().String()
+	c.Host = "http://" + ln.Addr().String()
 
 	go func() {
 		r := mux.NewRouter()
@@ -69,7 +69,7 @@ func main() {
 
 	html := new(bytes.Buffer)
 	t := template.Must(template.New("initialHtml").Parse(initialHTML))
-	err = t.Execute(html, c.host)
+	err = t.Execute(html, c.Host)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -6,8 +6,8 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>SecretSanta</title>
-    <link rel="stylesheet" href="{{ . }}/css/materialize.min.css">
-    <link rel="stylesheet" href="{{ . }}/css/fonts.css">
+    <link rel="stylesheet" href="{{ .Host }}/css/materialize.min.css">
+    <link rel="stylesheet" href="{{ .Host }}/css/fonts.css">
 </head>
 <body>
 <div class="container">
@@ -15,17 +15,88 @@
     <div class="row">
         <div class="col s12">
             <h2>Mail config</h2>
-            <!-- TODO implement -->
-            <pre>{{ printf "%+v" . }}</pre>
+
+            <form class="col s12" data-bind="submit: saveConfig">
+
+                <div class="row valign-wrapper">
+                    <div class="input-field col s6">
+                        <input type="text" id="smtp_server" data-bind="value: smtp_server">
+                        <label for="smtp_server">SMTP server</label>
+                    </div>
+                    <div class="input-field col s3">
+                        <input type="number" id="smtp_port" data-bind="value: smtp_port">
+                        <label for="smtp_port">SMTP port</label>
+                    </div>
+                    <div class="input-field col s3">
+                        <div class="switch">
+                            <label>
+                                <input type="checkbox" name="smtp_ssl">
+                                <span class="lever"></span>
+                                use SSL
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="input-field col s6">
+                        <input type="text" id="smtp_user" data-bind="value: smtp_user">
+                        <label for="smtp_user">SMTP server</label>
+                    </div>
+                    <div class="input-field col s6">
+                        <input type="password" id="smtp_pass" data-bind="value: smtp_pass">
+                        <label for="smtp_pass">SMTP password</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="input-field col s6">
+                        <input type="text" id="mail_subject" data-bind="value: mail_subject">
+                        <label for="mail_subject">Subject line</label>
+                    </div>
+                    <div class="input-field col s6">
+                        <input type="email" id="sender_address" data-bind="value: sender_address">
+                        <label for="sender_address">Sender address</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col s12 right-align">
+                        <button type="submit"
+                                class="waves-effect waves-light btn-small red white-text">
+                            <i class="material-icons left">email</i>
+                            Send Mails
+                        </button>
+                    </div>
+                </div>
+
+            </form>
         </div>
     </div>
 </div>
 
-<script type="text/javascript" src="{{ . }}/js/materialize.min.js"></script>
-<script type="text/javascript" src="{{ . }}/js/knockout-3.4.2.min.js"></script>
+<script type="text/javascript" src="{{ .Host }}/js/materialize.min.js"></script>
+<script type="text/javascript" src="{{ .Host }}/js/knockout-3.4.2.min.js"></script>
 <script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function () {
+        function MailConfigViewModel() {
+            self.smtp_server = ko.observable();
+            self.smtp_port = ko.observable();
+            self.smtp_user = ko.observable();
+            self.smtp_pass = ko.observable();
+            self.mail_subject = ko.observable();
+            self.sender_address = ko.observable();
 
+            self.sendMails = function(){
+                console.info("send mails function called")
+            };
+
+            self.saveConfig = function(){
+                console.info("saveConfig function called")
+            };
+        }
+
+        ko.applyBindings(new MailConfigViewModel());
     });
 </script>
 </body>

@@ -15,7 +15,7 @@ func (c *conf) handleFontCss(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/css")
-	err = t.Execute(w, c.host)
+	err = t.Execute(w, c.Host)
 	if err != nil {
 		log.Errorf("%+v", errors.Wrap(err, "could not write to ResponseWriter"))
 		return
