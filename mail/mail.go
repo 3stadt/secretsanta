@@ -2,8 +2,11 @@ package mail
 
 import (
 	"bytes"
-	"gopkg.in/gomail.v2"
+	"fmt"
+	"github.com/jordan-wright/email"
 	"html/template"
+	"net/smtp"
+	"net/textproto"
 )
 
 type Mail interface {
@@ -22,7 +25,7 @@ type MailData struct {
 	Username     string
 	Password     string
 	Subject      string
-	FromAddress string
+	FromAddress  string
 	TemplateData TemplateData
 }
 
@@ -57,13 +60,14 @@ func (r *request) Send(m *MailData) error {
 }
 
 func (r *mailReq) sendViaSmtp() error {
-	m := gomail.NewMessage()
-	m.SetHeader("From", r.Request.from)
-	m.SetHeader("To", r.Request.to...)
-	m.SetHeader("Subject", r.Request.subject)
-	m.SetBody("text/html", r.Request.body)
-	d := gomail.NewPlainDialer(r.MailData.Server, r.MailData.Port, r.MailData.Username, r.MailData.Password)
-	return d.DialAndSend(m)
+	e := &email.Email{
+		To:      r.Request.to,
+		From:    r.Request.from,
+		Subject: r.Request.subject,
+		HTML:    []byte(r.Request.body),
+		Headers: textproto.MIMEHeader{},
+	}
+	return e.Send(fmt.Sprintf("%s:%d", r.MailData.Server, r.MailData.Port), smtp.PlainAuth("", r.MailData.Username, r.MailData.Password, r.MailData.Server))
 }
 
 func (r *request) parseTemplate(templateFileName string, data interface{}) error {
