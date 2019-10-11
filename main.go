@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 )
 
 func main() {
@@ -56,11 +57,16 @@ func main() {
 		r.HandleFunc("/mail/send", c.handleSendMail).Methods("POST")
 		// The mail preview is embedded in the preview.html file, this endpoint shows the actual mail and is not the preview page
 		r.HandleFunc("/mail/template/{filename}", c.handlePreviewMail).Methods("GET")
+		// Return all filenames from HTML files inside the template/mail folder
 		r.HandleFunc("/previews/available", c.handlePreviewList).Methods("GET")
+		// Save the mail content/text to the DB
+		r.HandleFunc("/content", c.handlePostMailContent).Methods("POST")
+		// Convenience function: Open the OS Explorer at the template folder
 		r.HandleFunc("/os/openExplorer", c.handleOpenTemplateFolder).Methods("GET")
 
 		r.HandleFunc("/css/fonts.css", c.handleFontCss).Methods("GET")
 		r.HandleFunc("/index.html", c.handleIndexHtml).Methods("GET")
+		r.HandleFunc("/content.html", c.handleMailContent).Methods("GET")
 		r.HandleFunc("/preview.html", c.handlePreviewPage).Methods("GET")
 		r.HandleFunc("/config.html", c.handleConfigPage).Methods("GET")
 		r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("web"))))
@@ -75,12 +81,12 @@ func main() {
 	}
 
 	w := webview.New(webview.Settings{
-		Title: "The secret santa matcher",
+		Title:     "The secret santa matcher",
 		URL:       `data:text/html,` + url.PathEscape(html.String()),
 		Width:     800,
 		Height:    900,
 		Resizable: true,
-		Debug:     true,
+		Debug:     os.Getenv("DEBUG") == "true",
 	})
 
 	w.Run()

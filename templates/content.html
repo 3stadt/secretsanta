@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>SecretSanta</title>
+    <link rel="stylesheet" href="{{ .Host }}/css/materialize.min.css">
+    <link rel="stylesheet" href="{{ .Host }}/css/fonts.css">
+</head>
+<body>
+<div class="container">
+
+    <div class="row">
+        <div class="col s12">
+            <h2>The mail content</h2>
+            <p>The text you write here will be used in a mail template.</p>
+            <p>You will choose and preview the mail template in the next step.</p>
+        </div>
+    </div>
+    <form class="col s12" data-bind="submit: goToPreview">
+        <div class="row">
+            <div class="input-field col s12">
+                <input data-bind="value: headline" placeholder='e.g. "You have a match!"' id="headline" type="text">
+                <label for="headline">Headline</label>
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s6">
+                <input data-bind="value: greetingIntro" placeholder="e.g. 'Hey'" id="greeting_intro"
+                       name="greeting_intro" type="text" class="validate">
+                <label for="greeting_intro">Greeting Intro</label>
+            </div>
+            <div class="input-field col s6">
+                <input data-bind="value: greetingOutro" placeholder="e.g. ',' or '!'" id="greeting_outro"
+                       name="greeting_outro" type="text"
+                       class="validate">
+                <label for="greeting_outro">Greeting Outro</label>
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s12">
+                        <textarea data-bind="value: intro" id="intro"
+                                  placeholder="Everything BEFORE the presentee's name, e.g. 'You have matched with:'"
+                                  class="materialize-textarea"></textarea>
+                <label for="intro">Intro Text</label>
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s12">
+                <textarea data-bind="value: outro" id="outro"
+                          placeholder="Everything AFTER the presentee's name, e.g. 'Looking forward to meet you at...'"
+                          class="materialize-textarea"></textarea>
+                <label for="outro">Outro Text</label>
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s12">
+                <input data-bind="value: greeting" placeholder="e.g. 'Love, Betty'" id="greeting" type="text">
+                <label for="greeting">Greeting</label>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col s12 right-align">
+                <button class="waves-effect waves-light btn-small green black-text" data-bind="click: goToIndex">
+                    <i class="material-icons left">keyboard_arrow_left</i>
+                    Back
+                </button>
+                <button type="submit"
+                        class="waves-effect waves-light btn-small blue black-text">
+                    <i class="material-icons left">pageview</i>
+                    Next step
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script type="text/javascript" src="{{ .Host }}/js/materialize.min.js"></script>
+<script type="text/javascript" src="{{ .Host }}/js/knockout-3.4.2.min.js"></script>
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+
+        function Content(headline, greetingIntro, greetingOutro, intro, outro, greeting) {
+            let self = this
+            self.headline = headline
+            self.greetingIntro = greetingIntro
+            self.greetingOutro = greetingOutro
+            self.intro = intro
+            self.outro = outro
+            self.greeting = greeting
+        }
+
+        let viewModel = function () {
+            let self = this
+            self.headline = ko.observable("{{ .MailData.TemplateData.Headline }}")
+            self.greetingIntro = ko.observable("{{ .MailData.TemplateData.GreetingIntro }}")
+            self.greetingOutro = ko.observable("{{ .MailData.TemplateData.GreetingOutro }}")
+            self.intro = ko.observable("{{ .MailData.TemplateData.Intro }}")
+            self.outro = ko.observable("{{ .MailData.TemplateData.Outro }}")
+            self.greeting = ko.observable("{{ .MailData.TemplateData.Greeting }}")
+
+            self.goToPreview = function () {
+                self.goto("preview.html")
+            }
+
+            self.goToIndex = function () {
+                self.goto("index.html")
+            }
+
+            self.goto = function (route) {
+                let xhr = new XMLHttpRequest()
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        window.location = "{{ .Host }}/" + route
+                    }
+                }
+                let content = new Content(
+                    self.headline(),
+                    self.greetingIntro(),
+                    self.greetingOutro(),
+                    self.intro(),
+                    self.outro(),
+                    self.greeting()
+                )
+                let params = Object.keys(content).map(
+                    function (k) {
+                        return encodeURIComponent(k) + '=' + encodeURIComponent(content[k])
+                    }
+                ).join('&')
+                xhr.open('POST', '{{ .Host }}/content', true)
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8')
+                xhr.send(params)
+            }
+        }
+        ko.applyBindings(new viewModel())
+    })
+</script>
+</body>
+</html>

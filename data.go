@@ -6,7 +6,7 @@ type conf struct {
 	Host     string
 	santaDb  string
 	confFile string
-	MailData *mail.MailData
+	MailData *mail.Data
 }
 
 type santa struct {

@@ -46,7 +46,7 @@ func (c *conf) handleSendMail(w http.ResponseWriter, r *http.Request) {
 	pairings, seed := pair(santas, seed)
 
 	for santa, presentee := range pairings {
-		c.MailData.TemplateData = mail.TemplateData{
+		c.MailData.Pairings = mail.Pairings{
 			Santa:     santa.Name,
 			Presentee: presentee.Name,
 			Seed:      seed,

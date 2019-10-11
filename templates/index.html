@@ -42,9 +42,9 @@
                         <i class="material-icons left">add</i>
                         Add a Santa
                     </button>
-                    <button data-bind="click: goToPreview, disable: santas().length < 3"
+                    <button data-bind="click: goToContent, disable: santas().length < 3"
                             class="waves-effect waves-light btn-small blue black-text">
-                        <i class="material-icons left">email</i>
+                        <i class="material-icons left">mode_edit</i>
                         Next step
                     </button>
                     <div data-bind="visible: santas().length < 3">
@@ -146,15 +146,15 @@
                 let newSanta = new Santa(name, mail);
                 self.santas.push(newSanta);
                 newNameField.focus();
-                let request = new XMLHttpRequest();
+                let xhr = new XMLHttpRequest();
                 let params = Object.keys(newSanta).map(
                     function (k) {
                         return encodeURIComponent(k) + '=' + encodeURIComponent(newSanta[k])
                     }
                 ).join('&');
-                request.open('POST', '{{ . }}/santas', true);
-                request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-                request.send(params);
+                xhr.open('POST', '{{ . }}/santas', true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+                xhr.send(params);
             };
 
             self.isUniqueMail = function (mail) {
@@ -173,8 +173,8 @@
                 request.send();
             };
 
-            self.goToPreview = function () {
-                window.location = "{{ . }}/preview.html";
+            self.goToContent = function () {
+                window.location = "{{ . }}/content.html";
             };
         }
 

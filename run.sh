@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-go run *.go
+DEBUG=true go run ./*.go

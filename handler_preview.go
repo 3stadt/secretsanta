@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/3stadt/secretsanta/explorer"
+	"github.com/3stadt/secretsanta/mail"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"html/template"
@@ -46,25 +47,25 @@ func (c *conf) handlePreviewMail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	data := struct {
-		Headline string
-		GreetingIntro string
-		Santa      string
-		GreetingOutro string
-		SantaMatch string
-		Intro string
-		Outro string
-		Greeting string
-	}{
-		"You have a match! :)",
-		"Hey ",
-		"Danielle",
-		",",
-		"Benjamin",
-		"You've been matched with ",
-		"As a reminder: We will be meeting at Jolandas house at December 22nd. The gift should not cost more than $15.",
-		"Love, Holly",
+
+	data := &mail.TemplateData{
+		Headline:      "You have a match! :)",
+		GreetingIntro: "Hey ",
+		Santa:         "Danielle",
+		GreetingOutro: ",",
+		SantaMatch:    "Benjamin",
+		Intro:         "You've been matched with ",
+		Outro:         "As a reminder: We will be meeting at Jolandas house at December 22nd. The gift should not cost more than $15.",
+		Greeting:      "Love, Holly",
 	}
+
+	if c.MailData != nil && c.MailData.TemplateData != nil {
+		data = c.MailData.TemplateData
+	}
+
+	data.Santa = "Emanuelle Example"
+	data.SantaMatch = "Benjamin Beispiel"
+
 	err = t.Execute(w, data)
 	if err != nil {
 		log.Println(err.Error())

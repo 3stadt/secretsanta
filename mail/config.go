@@ -10,8 +10,8 @@ import (
 	"os"
 )
 
-func ReadConfig(configFile string) (*MailData, error) {
-	var mailConf MailData
+func ReadConfig(configFile string) (*Data, error) {
+	var mailConf Data
 	log.Infof("reading config file %s", configFile)
 	b, err := ioutil.ReadFile(configFile)
 	if err != nil {
@@ -28,7 +28,7 @@ func ReadConfig(configFile string) (*MailData, error) {
 	return &mailConf, nil
 }
 
-func (m *MailData) WriteConfig(configFile string) error {
+func (m *Data) WriteConfig(configFile string) error {
 	f, err := os.Create(configFile)
 	if err != nil {
 		return err

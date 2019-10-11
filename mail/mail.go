@@ -10,27 +10,39 @@ import (
 )
 
 type Mail interface {
-	Send(m *MailData) error
+	Send(m *Data) error
 }
 
-type TemplateData struct {
+type Pairings struct {
 	Santa     string
 	Presentee string
 	Seed      *int64
 }
 
-type MailData struct {
+type TemplateData struct {
+	Headline      string `json:"headline"`
+	GreetingIntro string `json:"greetingIntro"`
+	Santa         string `json:"santa"`
+	GreetingOutro string `json:"greetingOutro"`
+	SantaMatch    string `json:"santaMatch"`
+	Intro         string `json:"intro"`
+	Outro         string `json:"outro"`
+	Greeting      string `json:"greeting"`
+}
+
+type Data struct {
 	Server       string
 	Port         int
 	Username     string
 	Password     string
 	Subject      string
 	FromAddress  string
-	TemplateData TemplateData
+	Pairings     Pairings
+	TemplateData *TemplateData
 }
 
 type mailReq struct {
-	MailData *MailData
+	MailData *Data
 	Request  *request
 }
 
@@ -50,8 +62,8 @@ func NewRequest(to []string, from, subject, body string) *request {
 	}
 }
 
-func (r *request) Send(m *MailData) error {
-	err := r.parseTemplate("template.html", m.TemplateData)
+func (r *request) Send(m *Data) error {
+	err := r.parseTemplate("template.html", m.Pairings)
 	if err != nil {
 		return err
 	}

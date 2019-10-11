@@ -43,7 +43,16 @@ func (c *conf) getAllSantas() ([]santa, error) {
 	if err != nil {
 		return santas, errors.Wrap(err, "could not read Keys from db")
 	}
-	res := slowpoke.Gets(c.santaDb, keys)
+
+	// filter out mailcontent. TODO: find more clean solution
+	cleanKeys := [][]byte{}
+	for _, key := range keys {
+		if string(key) != "mailContent" {
+			cleanKeys = append(cleanKeys, key)
+		}
+	}
+
+	res := slowpoke.Gets(c.santaDb, cleanKeys)
 	for k, val := range res {
 		if k%2 == 0 {
 			continue // this is only the key, not the value
