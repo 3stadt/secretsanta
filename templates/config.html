@@ -20,17 +20,17 @@
 
                 <div class="row valign-wrapper">
                     <div class="input-field col s6">
-                        <input type="text" id="smtp_server" data-bind="value: smtp_server">
+                        <input type="text" id="smtp_server" data-bind="value: smtpServer">
                         <label for="smtp_server">SMTP server</label>
                     </div>
                     <div class="input-field col s3">
-                        <input type="number" id="smtp_port" data-bind="value: smtp_port">
+                        <input type="number" id="smtp_port" data-bind="value: smtpPort">
                         <label for="smtp_port">SMTP port</label>
                     </div>
                     <div class="input-field col s3">
                         <div class="switch">
                             <label>
-                                <input type="checkbox" name="smtp_ssl">
+                                <input type="checkbox" name="smtpSsl">
                                 <span class="lever"></span>
                                 use SSL
                             </label>
@@ -40,22 +40,22 @@
 
                 <div class="row">
                     <div class="input-field col s6">
-                        <input type="text" id="smtp_user" data-bind="value: smtp_user">
+                        <input type="text" id="smtp_user" data-bind="value: smtpUser">
                         <label for="smtp_user">SMTP server</label>
                     </div>
                     <div class="input-field col s6">
-                        <input type="password" id="smtp_pass" data-bind="value: smtp_pass">
+                        <input type="password" id="smtp_pass" data-bind="value: smtpPass">
                         <label for="smtp_pass">SMTP password</label>
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="input-field col s6">
-                        <input type="text" id="mail_subject" data-bind="value: mail_subject">
+                        <input type="text" id="mail_subject" data-bind="value: mailSubject">
                         <label for="mail_subject">Subject line</label>
                     </div>
                     <div class="input-field col s6">
-                        <input type="email" id="sender_address" data-bind="value: sender_address">
+                        <input type="email" id="sender_address" data-bind="value: senderAddress">
                         <label for="sender_address">Sender address</label>
                     </div>
                 </div>
@@ -80,12 +80,13 @@
 <script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function () {
         function MailConfigViewModel() {
-            self.smtp_server = ko.observable();
-            self.smtp_port = ko.observable();
-            self.smtp_user = ko.observable();
-            self.smtp_pass = ko.observable();
-            self.mail_subject = ko.observable();
-            self.sender_address = ko.observable();
+            self.smtpServer = ko.observable("{{ .MailData.Server }}");
+            self.smtpPort = ko.observable({{ .MailData.Port }});
+            self.smtpUser = ko.observable("{{ .MailData.Username }}");
+            self.smtpPass = ko.observable("{{ .MailData.Password }}");
+            self.mailSubject = ko.observable("{{ .MailData.FromAddress }}");
+            self.senderAddress = ko.observable("{{ .MailData.Port }}");
+            self.smtpSsl = ko.observable("{{ .MailData.SSL }}");
 
             self.sendMails = function(){
                 console.info("send mails function called")

@@ -31,12 +31,13 @@ type TemplateData struct {
 }
 
 type Data struct {
-	Server       string
-	Port         int
-	Username     string
-	Password     string
-	Subject      string
-	FromAddress  string
+	Server       string `json:"smtpServer"`
+	Port         int    `json:"smtpPort"`
+	Username     string `json:"smtpUser"`
+	Password     string `json:"smtpPass"`
+	Subject      string `json:"mailSubject"`
+	FromAddress  string `json:"senderAddress"`
+	SSL          bool   `json:"smtpSsl"`
 	Pairings     Pairings
 	TemplateData *TemplateData
 }

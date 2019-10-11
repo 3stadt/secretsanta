@@ -26,6 +26,21 @@ func (c *conf) handleConfigPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (c *conf) handleConfigPagePost(w http.ResponseWriter, r *http.Request) {
+	t := template.New("config.html")
+	t, err := t.ParseFiles("./templates/config.html")
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	err = t.Execute(w, c)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+}
+
 func (c *conf) handleSendMail(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var seed *int64 = nil

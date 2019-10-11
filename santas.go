@@ -45,9 +45,10 @@ func (c *conf) getAllSantas() ([]santa, error) {
 	}
 
 	// filter out mailcontent. TODO: find more clean solution
+	// filter out smtp-data. TODO: find more clean solution
 	cleanKeys := [][]byte{}
 	for _, key := range keys {
-		if string(key) != "mailContent" {
+		if string(key) != "mailContent" && string(key) != "smtpData" {
 			cleanKeys = append(cleanKeys, key)
 		}
 	}
