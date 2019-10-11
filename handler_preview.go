@@ -47,11 +47,23 @@ func (c *conf) handlePreviewMail(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	data := struct {
+		Headline string
+		GreetingIntro string
 		Santa      string
+		GreetingOutro string
 		SantaMatch string
+		Intro string
+		Outro string
+		Greeting string
 	}{
+		"You have a match! :)",
+		"Hey ",
 		"Danielle",
+		",",
 		"Benjamin",
+		"You've been matched with ",
+		"As a reminder: We will be meeting at Jolandas house at December 22nd. The gift should not cost more than $15.",
+		"Love, Holly",
 	}
 	err = t.Execute(w, data)
 	if err != nil {
