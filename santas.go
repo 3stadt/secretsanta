@@ -68,22 +68,44 @@ func (c *conf) getAllSantas() ([]santa, error) {
 	return santas, nil
 }
 
-func pair(p []santa, seed *int64) (map[santa]santa, *int64) {
+func pair(s []santa, seed *int64) (map[santa]santa, *int64) {
 	if seed == nil {
 		now := time.Now().UnixNano()
 		seed = &now
 	}
+	s = removeDuplicates(s)
 	rand.Seed(*seed)
-	perm := rand.Perm(len(p))
-	lastIndex := len(perm) - 1
-	partMap := make(map[santa]santa)
-	for i, randIndex := range perm {
-		part := p[randIndex]
-		if i == lastIndex {
-			partMap[part] = p[perm[0]]
+	rand.Shuffle(len(s), func(i, j int) { s[i], s[j] = s[j], s[i] })
+
+	pairs := make(map[santa]santa)
+
+	maxIndex := len(s) - 1
+	for i := 0; i <= maxIndex; i++ {
+		if i == maxIndex {
+			pairs[s[i]] = s[0]
 			continue
 		}
-		partMap[part] = p[perm[i+1]]
+		pairs[s[i]] = s[i+1]
 	}
-	return partMap, seed
+
+	return pairs, seed
+}
+
+func removeDuplicates(elements []santa) []santa {
+	// Use map to record duplicates as we find them.
+	santaMap := make(map[santa]struct{})
+	result := []santa{}
+
+	for _, v := range elements {
+		if v.Name == "" || v.Mail == "" {
+			continue
+		}
+		santaMap[v] = struct{}{}
+	}
+
+	for v := range santaMap {
+		result = append(result, v)
+	}
+
+	return result
 }

@@ -5,6 +5,10 @@
     src: url({{ . }}/fonts/materialize-icons.woff2) format('woff2');
 }
 
+textarea, input {
+    color: black;
+}
+
 .material-icons {
     font-family: 'Material Icons';
     font-weight: normal;

@@ -20,6 +20,7 @@ func (c *conf) saveContent(r *http.Request) error {
 		Outro:         r.FormValue("outro"),
 		Greeting:      r.FormValue("greeting"),
 	}
+	c.MailData.TemplateData = &content
 	b, _ := json.Marshal(content)
 	err := slowpoke.Set(c.santaDb, []byte("mailContent"), b)
 	if err != nil {
@@ -31,12 +32,11 @@ func (c *conf) saveContent(r *http.Request) error {
 func (c *conf) getContent() error {
 	data := mail.TemplateData{}
 	bytes, err := slowpoke.Get(c.santaDb, []byte("mailContent"))
-	if err != nil {
-		return errors.Wrap(err, "could not read content from db")
-	}
-	err = json.Unmarshal(bytes, &data)
-	if err != nil {
-		return err
+	if err == nil {
+		err = json.Unmarshal(bytes, &data)
+		if err != nil {
+			return err
+		}
 	}
 	if c.MailData == nil {
 		c.MailData = &mail.Data{
@@ -46,7 +46,7 @@ func (c *conf) getContent() error {
 			Password:     "",
 			Subject:      "",
 			FromAddress:  "",
-			Pairings:     mail.Pairings{},
+			Pairing:      mail.Pairing{},
 			TemplateData: &data,
 		}
 		return nil

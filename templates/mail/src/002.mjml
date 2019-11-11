@@ -7,7 +7,7 @@
     </mj-section>
     <mj-section background-color="#eeeeee" padding-bottom="20px" padding-top="20">
       <mj-column vertical-align="middle" width="100%">
-        <mj-text align="left" color="#000000" font-size="22px" font-family="open Sans Helvetica, Arial, sans-serif" padding-left="25px" padding-right="25px">{{ .GreetingIntro }}{{ .Santa }}{{ .GreetingOutro }}</mj-text>
+        <mj-text align="left" color="#000000" font-size="22px" font-family="open Sans Helvetica, Arial, sans-serif" padding-left="25px" padding-right="25px">{{ .GreetingIntro }} {{ .Santa }}{{ .GreetingOutro }}</mj-text>
         <mj-text align="left" color="#000000" font-size="15px" font-family="open Sans Helvetica, Arial, sans-serif" padding-left="25px" padding-right="25px">
           {{ .Intro }}{{ .SantaMatch }}{{ .Outro }}
         </mj-text>

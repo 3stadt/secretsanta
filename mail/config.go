@@ -33,10 +33,12 @@ func (m *Data) WriteConfig(configFile string) error {
 	if err != nil {
 		return err
 	}
-	m.Password = base64.StdEncoding.EncodeToString([]byte(m.Password))
+	saveData := *m
+	saveData.Pairing = Pairing{}
+	saveData.Password = base64.StdEncoding.EncodeToString([]byte(saveData.Password))
 	log.Infof("writing config file %s", configFile)
 	w := bufio.NewWriter(f)
 	e := toml.NewEncoder(w)
-	err = e.Encode(m)
+	err = e.Encode(saveData)
 	return err
 }

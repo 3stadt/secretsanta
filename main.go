@@ -16,13 +16,13 @@ import (
 )
 
 func main() {
-	//file, err := os.OpenFile("secretsanta.log", os.O_CREATE|os.O_WRONLY, 0666)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//log.SetOutput(file)
+	file, err := os.OpenFile("secretsanta.log", os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.SetOutput(file)
 	log.SetReportCaller(true)
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.FatalLevel)
 
 	c := conf{
 		santaDb:  "secretsanta.db",
@@ -54,9 +54,7 @@ func main() {
 		// Delete a Santa from DB, using the mail address as identifier
 		r.HandleFunc("/santas/{mail}", c.handleDeleteSanta).Methods("DELETE")
 		// Send the actual mail. Returns an error if no config is saved yet
-		r.HandleFunc("/mail/saveconfig", c.handleConfigPagePost).Methods("POST")
-		// Send the actual mail. Returns an error if no config is saved yet
-		r.HandleFunc("/mail/send", c.handleSendMail).Methods("POST")
+		r.HandleFunc("/mail/saveandsend", c.handleConfigPagePost).Methods("POST")
 		// The mail preview is embedded in the preview.html file, this endpoint shows the actual mail and is not the preview page
 		r.HandleFunc("/mail/template/{filename}", c.handlePreviewMail).Methods("GET")
 		// Return all filenames from HTML files inside the template/mail folder

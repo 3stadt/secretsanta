@@ -13,7 +13,7 @@ type Mail interface {
 	Send(m *Data) error
 }
 
-type Pairings struct {
+type Pairing struct {
 	Santa     string
 	Presentee string
 	Seed      *int64
@@ -38,7 +38,7 @@ type Data struct {
 	Subject      string `json:"mailSubject"`
 	FromAddress  string `json:"senderAddress"`
 	SSL          bool   `json:"smtpSsl"`
-	Pairings     Pairings
+	Pairing      Pairing
 	TemplateData *TemplateData
 }
 
@@ -63,8 +63,8 @@ func NewRequest(to []string, from, subject, body string) *request {
 	}
 }
 
-func (r *request) Send(m *Data) error {
-	err := r.parseTemplate("template.html", m.Pairings)
+func (r *request) Send(m *Data, templatePath string) error {
+	err := r.parseTemplate(templatePath, m.TemplateData)
 	if err != nil {
 		return err
 	}
