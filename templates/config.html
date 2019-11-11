@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>SecretSanta</title>
+    <link rel="stylesheet" href="{{ .Host }}/css/materialize.min.css">
+    <link rel="stylesheet" href="{{ .Host }}/css/fonts.css">
+</head>
+<body>
+<div class="container">
+
+    <div class="row">
+        <div class="col s12">
+            <h2>Mail config</h2>
+
+            <form class="col s12" data-bind="submit: saveConfigAndSendMails">
+
+                <div class="row valign-wrapper">
+                    <div class="input-field col s6">
+                        <input type="text" id="smtp_server" data-bind="value: smtpServer">
+                        <label for="smtp_server">SMTP server</label>
+                    </div>
+                    <div class="input-field col s3">
+                        <input type="number" id="smtp_port" data-bind="value: smtpPort">
+                        <label for="smtp_port">SMTP port</label>
+                    </div>
+                    <div class="input-field col s3">
+                        <div class="switch">
+                            <label>
+                                <input type="checkbox" name="smtpSsl">
+                                <span class="lever"></span>
+                                use SSL
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="input-field col s6">
+                        <input type="text" id="smtp_user" data-bind="value: smtpUser">
+                        <label for="smtp_user">SMTP User</label>
+                    </div>
+                    <div class="input-field col s6">
+                        <input type="password" id="smtp_pass" data-bind="value: smtpPass">
+                        <label for="smtp_pass">SMTP password</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="input-field col s6">
+                        <input type="text" id="mail_subject" data-bind="value: mailSubject">
+                        <label for="mail_subject">Subject line</label>
+                    </div>
+                    <div class="input-field col s6">
+                        <input type="email" id="sender_address" data-bind="value: senderAddress">
+                        <label for="sender_address">Sender address</label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col s12 right-align">
+                        <button type="button" class="waves-effect waves-light btn-small green black-text"
+                                data-bind="click: goToContent">
+                            <i class="material-icons left">keyboard_arrow_left</i>
+                            Back
+                        </button>
+                        <button type="submit"
+                                class="waves-effect waves-light btn-small red white-text">
+                            <i class="material-icons left">email</i>
+                            Save config & Send Mails
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="{{ .Host }}/js/materialize.min.js"></script>
+<script type="text/javascript" src="{{ .Host }}/js/knockout-3.4.2.min.js"></script>
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        function MailConfigViewModel() {
+            self.smtpServer = ko.observable("{{ .MailData.Server }}")
+            self.smtpPort = ko.observable({{ .MailData.Port }})
+            self.smtpUser = ko.observable("{{ .MailData.Username }}")
+            self.smtpPass = ko.observable("{{ .MailData.Password }}")
+            self.mailSubject = ko.observable("{{ .MailData.Subject }}")
+            self.senderAddress = ko.observable("{{ .MailData.FromAddress }}")
+            self.smtpSsl = ko.observable("{{ .MailData.SSL }}")
+
+            self.goToContent = function () {
+                window.location = "{{ .Host }}/content.html"
+            }
+
+            self.saveConfigAndSendMails = function () {
+                conf = {
+                    smtpServer: self.smtpServer(),
+                    smtpPort: self.smtpPort(),
+                    smtpUser: self.smtpUser(),
+                    smtpPass: self.smtpPass(),
+                    mailSubject: self.mailSubject(),
+                    senderAddress: self.senderAddress(),
+                    smtpSsl: self.smtpSsl(),
+                }
+                let xhr = new XMLHttpRequest()
+                let params = Object.keys(conf).map(
+                    function (k) {
+                        return encodeURIComponent(k) + '=' + encodeURIComponent(conf[k])
+                    }
+                ).join('&')
+                xhr.open('POST', '{{ .Host }}/mail/saveandsend', true)
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8')
+                xhr.onload = function () {
+                    if (xhr.status !== 200) {
+                        M.toast({
+                            html: '<i class="material-icons left">error</i>could not send mails!',
+                            classes: 'rounded red'
+                        })
+                        M.toast({
+                            html: '<i class="material-icons left">error</i>' + xhr.responseText,
+                            classes: 'rounded red'
+                        })
+                        return
+                    }
+                    M.toast({
+                        html: '<i class="material-icons left">done</i>Mails sent successfully!',
+                        classes: 'rounded green'
+                    })
+                }
+                xhr.send(params)
+            }
+        }
+
+        ko.applyBindings(new MailConfigViewModel())
+    })
+</script>
+</body>
+</html>

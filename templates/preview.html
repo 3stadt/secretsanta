@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>SecretSanta</title>
+    <link rel="stylesheet" href="{{ . }}/css/materialize.min.css">
+    <link rel="stylesheet" href="{{ . }}/css/fonts.css">
+</head>
+<body>
+<div class="container">
+
+    <div class="row">
+        <div class="col s12">
+            <h2>Preview</h2>
+        </div>
+    </div>
+    <form class="col s12">
+        <div class="row">
+            <div class="input-field col s6">
+                <select id="templateSelect"
+                        class="browser-default"
+                        name="templateSelect"
+                        data-bind="options: availableTemplates,
+                            value: selectedTemplate,
+                            valueAllowUnset: true,
+                    optionsCaption: 'Select a template...'"></select>
+            </div>
+            <div class="input-field col s6">
+                <button class="waves-effect waves-light btn-small green black-text" data-bind="click: GetPreviews">
+                    <i class="material-icons left">refresh</i>
+                    Reload
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col s12">
+                Want to create your own? <a href="https://mjml.io/">Mjml</a> is a fantastic and free service for
+                creating beautiful html mails that are displayed nicely in every mail client.<br/>
+                There is an <a href="https://mjml.io/try-it-live">online editor</a>, a <a
+                        href="https://mjmlio.github.io/mjml-app/"></a>
+                desktop application and of course an extensive <a
+                        href="https://mjml.io/documentation/">documentation</a>.<br/>
+                When done, put a new html file inside <a href="#" data-bind="click: OpenExplorer">this folder</a>.<br/>
+                <button data-bind="click: goToConfig, disable: !selectedTemplate()"
+                        class="waves-effect waves-light btn-small blue black-text">
+                    <i class="material-icons left">email</i>
+                    Next step
+                </button>
+                <div data-bind="visible: !selectedTemplate()">
+                    <small>(You need to select a template to progress)</small>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="row">
+        <div class="col s12">
+            <object id="preview" data-bind="attr: { data: previewUrl }" width="650"
+                    height="700"
+                    type="text/html">
+                No valid template selected yet.
+            </object>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="{{ . }}/js/materialize.min.js"></script>
+<script type="text/javascript" src="{{ . }}/js/knockout-3.4.2.min.js"></script>
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        let elem = document.getElementById("templateSelect");
+        M.FormSelect.init(elem, {});
+
+        let viewModel = function () {
+            let self = this;
+            self.host = '{{ . }}';
+            self.OpenExplorer = function () {
+                let xhr = new XMLHttpRequest();
+                xhr.open('GET', self.host + '/os/openExplorer');
+                xhr.send();
+            };
+            self.availableTemplates = ko.observableArray([]);
+            self.GetPreviews = function () {
+                let xhr = new XMLHttpRequest();
+                xhr.open('GET', self.host + '/previews/available');
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        let previewJson = JSON.parse(xhr.responseText);
+                        self.availableTemplates(previewJson.map(function (preview) {
+                            return preview;
+                        }))
+                    }
+                };
+                xhr.send();
+            };
+            self.GetPreviews();
+
+            self.goToConfig = function () {
+                window.location = "{{ . }}/config.html";
+            };
+
+            self.selectedTemplate = ko.observable();
+            self.previewUrl = ko.computed(function () {
+                if (!self.selectedTemplate()) {
+                    return "";
+                }
+                return self.host + '/mail/template/' + self.selectedTemplate();
+            });
+        };
+        ko.applyBindings(new viewModel());
+    });
+</script>
+</body>
+</html>
