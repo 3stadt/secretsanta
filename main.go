@@ -22,7 +22,7 @@ func main() {
 	}
 	log.SetOutput(file)
 	log.SetReportCaller(true)
-	log.SetLevel(log.FatalLevel)
+	log.SetLevel(log.ErrorLevel)
 
 	c := conf{
 		santaDb:  "secretsanta.db",

@@ -5,6 +5,10 @@
     src: url({{ . }}/fonts/materialize-icons.woff2) format('woff2');
 }
 
+body {
+    background-color: white;
+}
+
 textarea, input {
     color: black;
 }

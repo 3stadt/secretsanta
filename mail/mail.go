@@ -2,6 +2,7 @@ package mail
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"github.com/jordan-wright/email"
 	"html/template"
@@ -52,14 +53,16 @@ type request struct {
 	to      []string
 	subject string
 	body    string
+	ssl     bool
 }
 
-func NewRequest(to []string, from, subject, body string) *request {
+func NewRequest(to []string, from, subject, body string, ssl bool) *request {
 	return &request{
 		from:    from,
 		to:      to,
 		subject: subject,
 		body:    body,
+		ssl:     ssl,
 	}
 }
 
@@ -79,6 +82,15 @@ func (r *mailReq) sendViaSmtp() error {
 		Subject: r.Request.subject,
 		HTML:    []byte(r.Request.body),
 		Headers: textproto.MIMEHeader{},
+	}
+	if r.Request.ssl {
+		return e.SendWithTLS(
+			fmt.Sprintf("%s:%d", r.MailData.Server, r.MailData.Port),
+			smtp.PlainAuth("", r.MailData.Username, r.MailData.Password, r.MailData.Server),
+			&tls.Config{
+				ServerName: r.MailData.Server,
+			},
+		)
 	}
 	return e.Send(fmt.Sprintf("%s:%d", r.MailData.Server, r.MailData.Port), smtp.PlainAuth("", r.MailData.Username, r.MailData.Password, r.MailData.Server))
 }

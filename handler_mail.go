@@ -64,6 +64,7 @@ func (c *conf) sendMail(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_, _ = fmt.Fprint(w, err.Error())
+			log.Error(err)
 			return
 		}
 		seed = &userSeed
@@ -83,7 +84,7 @@ func (c *conf) sendMail(w http.ResponseWriter, r *http.Request) {
 		}
 		c.MailData.TemplateData.Santa = santa.Name
 		c.MailData.TemplateData.SantaMatch = presentee.Name
-		req := mail.NewRequest([]string{santa.Mail}, c.MailData.FromAddress, c.MailData.Subject, "")
+		req := mail.NewRequest([]string{santa.Mail}, c.MailData.FromAddress, c.MailData.Subject, "", c.MailData.SSL)
 		err := req.Send(c.MailData, "templates/mail/001.html")
 		if err != nil {
 			log.Errorf("%+v", errors.Wrap(err, "could not send mail"))
